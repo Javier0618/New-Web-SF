@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - StreamFusion Movies</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <style>
+        /* Dashboard Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        
+        @media (min-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        /* Metric Card Animation */
+        .metric-card {
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), box-shadow 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-strong);
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        /* Activity Feed */
+        .activity-item {
+            transition: background-color 0.2s ease;
+        }
+        
+        .activity-item:hover {
+            background-color: var(--color-surface-hover);
+        }
+        
+        /* Tab Navigation */
+        .tab-nav {
+            border-bottom: 2px solid var(--color-border);
+        }
+        
+        .tab-button {
+            position: relative;
+            padding: 1rem 1.5rem;
+            transition: color 0.2s ease;
+        }
+        
+        .tab-button.active {
+            color: var(--color-primary);
+        }
+        
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--color-primary);
+        }
+        
+        /* Quick Action Cards */
+        .action-card {
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        .action-card:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        /* Status Indicators */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        .status-active {
+            background-color: var(--color-success);
+            box-shadow: 0 0 8px var(--color-success);
+        }
+        
+        .status-pending {
+            background-color: var(--color-warning);
+            box-shadow: 0 0 8px var(--color-warning);
+        }
+        
+        .status-inactive {
+            background-color: var(--color-text-tertiary);
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background-color: var(--color-surface-light);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            transition: width 0.5s ease;
+        }
+        
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background-color: var(--color-primary);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        /* Sidebar Toggle */
+        .sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        @media (max-width: 1023px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                z-index: 50;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        
+        /* Table Responsive */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .admin-table th {
+            background-color: var(--color-surface-light);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--color-border);
+        }
+        
+        .admin-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .admin-table tr:hover {
+            background-color: var(--color-surface-hover);
+        }
+    </style>
+  <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fstreamfusi9123back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.11"></script>
+  <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.1"></script>
+  </head>
+<body class="bg-background min-h-screen">
+    <!-- Admin Header -->
+    <header class="fixed top-0 left-0 right-0 z-40 bg-surface border-b border-border">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo & Admin Title -->
+                <div class="flex items-center space-x-4">
+                    <button class="lg:hidden text-text-primary" onclick="toggleSidebar()">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1093c5d5c-1764650234400.png" alt="Menú" class="w-6 h-6">
+                    </button>
+                    <a href="../homepage.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="8" fill="#E50914"/>
+                            <path d="M12 10L20 20L12 30V10Z" fill="white"/>
+                            <path d="M20 10L28 20L20 30V10Z" fill="white" opacity="0.7"/>
+                        </svg>
+                        <span class="text-xl font-bold text-gradient">StreamFusion</span>
+                    </a>
+                    <span class="hidden md:block text-text-secondary text-sm">Panel de Administración</span>
+                </div>
+                
+                <!-- Admin Actions -->
+                <div class="flex items-center space-x-4">
+                    <!-- Notifications -->
+                    <button class="relative text-text-primary hover:text-primary transition-colors duration-200">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1721906bc-1765130898769.png" alt="Notificaciones" class="w-6 h-6">
+                        <span class="notification-badge">3</span>
+                    </button>
+                    
+                    <!-- Admin Profile -->
+                    <a href="../user_profile.html" class="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_117dbac63-1763295212937.png" alt="Perfil de administrador" class="w-8 h-8 rounded-full object-cover">
+                        <span class="hidden md:block text-sm text-text-primary">Admin</span>
+                    </a>
+                    
+                    <!-- Back to Site -->
+                    <a href="../homepage.html" class="btn btn-ghost text-sm">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_141e0315e-1764815734746.png" alt="Volver" class="w-5 h-5 mr-2">
+                        <span class="hidden md:inline">Volver al Sitio</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Main Layout -->
+    <div class="flex pt-16">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar w-64 bg-surface border-r border-border lg:translate-x-0" id="adminSidebar">
+            <div class="p-6 space-y-6">
+                <!-- Dashboard Section -->
+                <div>
+                    <h3 class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">Panel Principal</h3>
+                    <nav class="space-y-2">
+                        <a href="admin_dashboard.html" class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-primary/10 text-primary">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12ea66b18-1764881903999.png" alt="Dashboard" class="w-5 h-5">
+                            <span class="font-medium">Dashboard</span>
+                        </a>
+                        <a href="content_import.html" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16f2812fc-1765272757974.png" alt="Importar Contenido" class="w-5 h-5">
+                            <span>Importar Contenido</span>
+                        </a>
+                        <a href="section_management.html" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_142c8bc34-1765654251205.png" alt="Gestión de Secciones" class="w-5 h-5">
+                            <span>Gestión de Secciones</span>
+                        </a>
+                    </nav>
+                </div>
+                
+                <!-- Content Management -->
+                <div>
+                    <h3 class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">Gestión de Contenido</h3>
+                    <nav class="space-y-2">
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_199bca6ec-1764712300943.png" alt="Películas" class="w-5 h-5">
+                            <span>Películas</span>
+                        </a>
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186adf256-1765640107235.png" alt="Series" class="w-5 h-5">
+                            <span>Series</span>
+                        </a>
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1ee9bde16-1765045796065.png" alt="Géneros" class="w-5 h-5">
+                            <span>Géneros</span>
+                        </a>
+                    </nav>
+                </div>
+                
+                <!-- User Management -->
+                <div>
+                    <h3 class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">Usuarios</h3>
+                    <nav class="space-y-2">
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1956f0c22-1764659033616.png" alt="Todos los Usuarios" class="w-5 h-5">
+                            <span>Todos los Usuarios</span>
+                        </a>
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_140563e21-1765024425776.png" alt="Roles y Permisos" class="w-5 h-5">
+                            <span>Roles y Permisos</span>
+                        </a>
+                    </nav>
+                </div>
+                
+                <!-- Analytics -->
+                <div>
+                    <h3 class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">Análisis</h3>
+                    <nav class="space-y-2">
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1bd495495-1764829298042.png" alt="Estadísticas" class="w-5 h-5">
+                            <span>Estadísticas</span>
+                        </a>
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_148319e83-1764828060274.png" alt="Contenido Popular" class="w-5 h-5">
+                            <span>Contenido Popular</span>
+                        </a>
+                    </nav>
+                </div>
+                
+                <!-- Settings -->
+                <div>
+                    <h3 class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">Configuración</h3>
+                    <nav class="space-y-2">
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_106b440a8-1765283361263.png" alt="Configuración General" class="w-5 h-5">
+                            <span>Configuración General</span>
+                        </a>
+                        <a href="javascript:void(0)" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18bf1238a-1764698241502.png" alt="API Keys" class="w-5 h-5">
+                            <span>API Keys</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
+            <!-- Dashboard Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold mb-2">Panel de Administración</h1>
+                <p class="text-text-secondary">Bienvenido de nuevo, Admin. Aquí está el resumen de tu plataforma.</p>
+                <div class="flex items-center space-x-2 mt-2 text-sm text-text-tertiary">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_194e6fc4f-1765050299203.png" alt="Última actualización" class="w-4 h-4">
+                    <span>Última actualización: 15 de diciembre de 2025, 16:08</span>
+                </div>
+            </div>
+            
+            <!-- Key Metrics Cards -->
+            <section class="mb-8">
+                <div class="dashboard-grid">
+                    <!-- Total Content Card -->
+                    <div class="metric-card card p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <p class="text-text-secondary text-sm mb-1">Contenido Total</p>
+                                <h3 class="text-3xl font-bold">2,847</h3>
+                            </div>
+                            <div class="bg-primary/10 p-3 rounded-lg">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_123795b74-1764699542153.png" alt="Contenido" class="w-6 h-6">
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-success flex items-center">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12e3476c7-1765785402172.png" alt="Aumento" class="w-4 h-4">
+                                12.5%
+                            </span>
+                            <span class="text-text-tertiary">vs. mes anterior</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 75%;"></div>
+                            </div>
+                            <p class="text-xs text-text-tertiary mt-2">1,920 Películas • 927 Series</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Imports Card -->
+                    <div class="metric-card card p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <p class="text-text-secondary text-sm mb-1">Importaciones Recientes</p>
+                                <h3 class="text-3xl font-bold">156</h3>
+                            </div>
+                            <div class="bg-accent/10 p-3 rounded-lg">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1c000549d-1764820778518.png" alt="Importaciones" class="w-6 h-6">
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-success flex items-center">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12e3476c7-1765785402172.png" alt="Aumento" class="w-4 h-4">
+                                8.3%
+                            </span>
+                            <span class="text-text-tertiary">últimos 7 días</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 62%;"></div>
+                            </div>
+                            <p class="text-xs text-text-tertiary mt-2">98 Películas • 58 Series</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Users Card -->
+                    <div class="metric-card card p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <p class="text-text-secondary text-sm mb-1">Usuarios Activos</p>
+                                <h3 class="text-3xl font-bold">12,459</h3>
+                            </div>
+                            <div class="bg-success/10 p-3 rounded-lg">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1956f0c22-1764659033616.png" alt="Usuarios" class="w-6 h-6">
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-success flex items-center">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12e3476c7-1765785402172.png" alt="Aumento" class="w-4 h-4">
+                                23.1%
+                            </span>
+                            <span class="text-text-tertiary">vs. semana anterior</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 88%;"></div>
+                            </div>
+                            <p class="text-xs text-text-tertiary mt-2">2,847 nuevos usuarios este mes</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Popular Content Card -->
+                    <div class="metric-card card p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <p class="text-text-secondary text-sm mb-1">Reproducciones Totales</p>
+                                <h3 class="text-3xl font-bold">847K</h3>
+                            </div>
+                            <div class="bg-warning/10 p-3 rounded-lg">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1f763d8ef-1764643290137.png" alt="Reproducciones" class="w-6 h-6">
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-success flex items-center">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12e3476c7-1765785402172.png" alt="Aumento" class="w-4 h-4">
+                                15.7%
+                            </span>
+                            <span class="text-text-tertiary">vs. mes anterior</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 92%;"></div>
+                            </div>
+                            <p class="text-xs text-text-tertiary mt-2">Promedio: 28.2K reproducciones/día</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Quick Actions Panel -->
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">Acciones Rápidas</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Import Content Action -->
+                    <a href="content_import.html" class="action-card card p-6 hover:border-primary border-2 border-transparent">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-primary/10 p-4 rounded-lg">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16f2812fc-1765272757974.png" alt="Importar desde TMDB" class="w-8 h-8">
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-1">Importar desde TMDB</h3>
+                                <p class="text-sm text-text-secondary">Agregar nuevo contenido desde la base de datos de TMDB</p>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Manage Sections Action -->
+                    <a href="section_management.html" class="action-card card p-6 hover:border-accent border-2 border-transparent">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-accent/10 p-4 rounded-lg">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_142c8bc34-1765654251205.png" alt="Gestionar Secciones" class="w-8 h-8">
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-1">Gestionar Secciones</h3>
+                                <p class="text-sm text-text-secondary">Configurar carruseles y organizar contenido</p>
+                            </div>
+                        </div>
+                    </a>
+                    
+                    <!-- Content Moderation Action -->
+                    <a href="javascript:void(0)" class="action-card card p-6 hover:border-success border-2 border-transparent">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-success/10 p-4 rounded-lg">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17e783e24-1764790459461.png" alt="Moderar Contenido" class="w-8 h-8">
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-1">Moderar Contenido</h3>
+                                <p class="text-sm text-text-secondary">Revisar y aprobar contenido pendiente</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+            
+            <!-- Content Distribution Chart -->
+            <section class="mb-8">
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">Distribución de Contenido</h2>
+                        <div class="flex items-center space-x-2">
+                            <button class="btn btn-ghost btn-sm">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_115e7441e-1764657450428.png" alt="Filtrar" class="w-4 h-4 mr-2">
+                                Filtrar
+                            </button>
+                            <button class="btn btn-ghost btn-sm">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_193491049-1764648755870.png" alt="Exportar" class="w-4 h-4 mr-2">
+                                Exportar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- By Genre -->
+                        <div>
+                            <h3 class="font-semibold mb-4 text-text-secondary">Por Género</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Acción</span>
+                                        <span class="text-sm font-semibold">487 (17.1%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 17.1%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Drama</span>
+                                        <span class="text-sm font-semibold">623 (21.9%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 21.9%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Comedia</span>
+                                        <span class="text-sm font-semibold">412 (14.5%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 14.5%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Ciencia Ficción</span>
+                                        <span class="text-sm font-semibold">356 (12.5%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 12.5%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Terror</span>
+                                        <span class="text-sm font-semibold">298 (10.5%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 10.5%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Otros</span>
+                                        <span class="text-sm font-semibold">671 (23.5%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 23.5%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- By Platform -->
+                        <div>
+                            <h3 class="font-semibold mb-4 text-text-secondary">Por Plataforma</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Netflix</span>
+                                        <span class="text-sm font-semibold">1,247 (43.8%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 43.8%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Amazon Prime</span>
+                                        <span class="text-sm font-semibold">856 (30.1%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 30.1%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Disney+</span>
+                                        <span class="text-sm font-semibold">412 (14.5%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 14.5%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">HBO Max</span>
+                                        <span class="text-sm font-semibold">198 (7.0%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 7.0%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Apple TV+</span>
+                                        <span class="text-sm font-semibold">85 (3.0%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 3.0%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm">Otros</span>
+                                        <span class="text-sm font-semibold">49 (1.6%)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 1.6%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Recent Activity Feed -->
+            <section class="mb-8">
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">Actividad Reciente</h2>
+                        <a href="javascript:void(0)" class="text-primary hover:text-primary-light text-sm font-medium">Ver Todo</a>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <!-- Activity Item 1 -->
+                        <div class="activity-item flex items-start space-x-4 p-4 rounded-lg">
+                            <div class="bg-primary/10 p-2 rounded-lg flex-shrink-0">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16f2812fc-1765272757974.png" alt="Importación" class="w-5 h-5">
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm"><span class="font-semibold">Admin</span> importó <span class="font-semibold">23 películas</span> desde TMDB</p>
+                                <p class="text-xs text-text-tertiary mt-1">Hace 15 minutos</p>
+                            </div>
+                            <button class="btn btn-ghost btn-sm">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver detalles" class="w-4 h-4">
+                            </button>
+                        </div>
+                        
+                        <!-- Activity Item 2 -->
+                        <div class="activity-item flex items-start space-x-4 p-4 rounded-lg">
+                            <div class="bg-success/10 p-2 rounded-lg flex-shrink-0">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1c1401c11-1764670657600.png" alt="Nuevo usuario" class="w-5 h-5">
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm"><span class="font-semibold">47 nuevos usuarios</span> se registraron en la plataforma</p>
+                                <p class="text-xs text-text-tertiary mt-1">Hace 1 hora</p>
+                            </div>
+                            <button class="btn btn-ghost btn-sm">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver detalles" class="w-4 h-4">
+                            </button>
+                        </div>
+                        
+                        <!-- Activity Item 3 -->
+                        <div class="activity-item flex items-start space-x-4 p-4 rounded-lg">
+                            <div class="bg-accent/10 p-2 rounded-lg flex-shrink-0">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_142c8bc34-1765654251205.png" alt="Sección actualizada" class="w-5 h-5">
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm"><span class="font-semibold">Admin</span> actualizó la sección <span class="font-semibold">"Tendencias Ahora"</span></p>
+                                <p class="text-xs text-text-tertiary mt-1">Hace 3 horas</p>
+                            </div>
+                            <button class="btn btn-ghost btn-sm">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver detalles" class="w-4 h-4">
+                            </button>
+                        </div>
+                        
+                        <!-- Activity Item 4 -->
+                        <div class="activity-item flex items-start space-x-4 p-4 rounded-lg">
+                            <div class="bg-warning/10 p-2 rounded-lg flex-shrink-0">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1475e286a-1764677498835.png" alt="Alerta del sistema" class="w-5 h-5">
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm">Alerta del sistema: <span class="font-semibold">Límite de API TMDB alcanzado al 85%</span></p>
+                                <p class="text-xs text-text-tertiary mt-1">Hace 5 horas</p>
+                            </div>
+                            <button class="btn btn-ghost btn-sm">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver detalles" class="w-4 h-4">
+                            </button>
+                        </div>
+                        
+                        <!-- Activity Item 5 -->
+                        <div class="activity-item flex items-start space-x-4 p-4 rounded-lg">
+                            <div class="bg-primary/10 p-2 rounded-lg flex-shrink-0">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13cbef645-1764740835561.png" alt="Serie actualizada" class="w-5 h-5">
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm"><span class="font-semibold">Admin</span> agregó <span class="font-semibold">Temporada 3</span> a "Secretos de Familia"</p>
+                                <p class="text-xs text-text-tertiary mt-1">Hace 8 horas</p>
+                            </div>
+                            <button class="btn btn-ghost btn-sm">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver detalles" class="w-4 h-4">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Popular Content Table -->
+            <section class="mb-8">
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold">Contenido Más Popular</h2>
+                        <div class="flex items-center space-x-2">
+                            <select class="input py-2 text-sm">
+                                <option>Últimos 7 días</option>
+                                <option>Últimos 30 días</option>
+                                <option>Últimos 90 días</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Ranking</th>
+                                    <th>Título</th>
+                                    <th>Tipo</th>
+                                    <th>Género</th>
+                                    <th>Reproducciones</th>
+                                    <th>Calificación</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="badge bg-accent/90 text-background font-bold">#1</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_153c1b2bb-1764677117574.png" alt="Poster de Misterio Criminal" class="w-12 h-16 object-cover rounded">
+                                            <span class="font-medium">Misterio Criminal</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge badge-primary">Serie</span></td>
+                                    <td>Crimen</td>
+                                    <td class="font-semibold">127.5K</td>
+                                    <td>
+                                        <div class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_15133dc64-1764668665882.png" alt="Calificación" class="w-4 h-4">
+                                            <span class="font-semibold">9.5</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-dot status-active"></span>
+                                        <span class="text-sm">Activo</span>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://images.unsplash.com/photo-1668314681544-c608dcaa37cb" alt="Ver" class="w-4 h-4">
+                                            </button>
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-4 h-4">
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="badge bg-accent/90 text-background font-bold">#2</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_194f1f56f-1765815276243.png" alt="Poster de El Reino Perdido" class="w-12 h-16 object-cover rounded">
+                                            <span class="font-medium">El Reino Perdido</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge badge-accent">Película</span></td>
+                                    <td>Aventura</td>
+                                    <td class="font-semibold">98.3K</td>
+                                    <td>
+                                        <div class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_15133dc64-1764668665882.png" alt="Calificación" class="w-4 h-4">
+                                            <span class="font-semibold">8.9</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-dot status-active"></span>
+                                        <span class="text-sm">Activo</span>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://images.unsplash.com/photo-1668314681544-c608dcaa37cb" alt="Ver" class="w-4 h-4">
+                                            </button>
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-4 h-4">
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="badge bg-accent/90 text-background font-bold">#3</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1348887fd-1764894865352.png" alt="Poster de Secretos de Familia" class="w-12 h-16 object-cover rounded">
+                                            <span class="font-medium">Secretos de Familia</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge badge-primary">Serie</span></td>
+                                    <td>Drama</td>
+                                    <td class="font-semibold">87.1K</td>
+                                    <td>
+                                        <div class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_15133dc64-1764668665882.png" alt="Calificación" class="w-4 h-4">
+                                            <span class="font-semibold">9.2</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-dot status-active"></span>
+                                        <span class="text-sm">Activo</span>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://images.unsplash.com/photo-1668314681544-c608dcaa37cb" alt="Ver" class="w-4 h-4">
+                                            </button>
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-4 h-4">
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="badge bg-text-tertiary text-white font-bold">#4</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12600f8c2-1764766795500.png" alt="Poster de Horizonte 2099" class="w-12 h-16 object-cover rounded">
+                                            <span class="font-medium">Horizonte 2099</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge badge-primary">Serie</span></td>
+                                    <td>Ciencia Ficción</td>
+                                    <td class="font-semibold">76.8K</td>
+                                    <td>
+                                        <div class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_15133dc64-1764668665882.png" alt="Calificación" class="w-4 h-4">
+                                            <span class="font-semibold">9.4</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-dot status-active"></span>
+                                        <span class="text-sm">Activo</span>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://images.unsplash.com/photo-1668314681544-c608dcaa37cb" alt="Ver" class="w-4 h-4">
+                                            </button>
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-4 h-4">
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="badge bg-text-tertiary text-white font-bold">#5</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d86ec0d9-1765717722481.png" alt="Poster de Amor en Manhattan" class="w-12 h-16 object-cover rounded">
+                                            <span class="font-medium">Amor en Manhattan</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge badge-accent">Película</span></td>
+                                    <td>Romance</td>
+                                    <td class="font-semibold">65.4K</td>
+                                    <td>
+                                        <div class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_15133dc64-1764668665882.png" alt="Calificación" class="w-4 h-4">
+                                            <span class="font-semibold">8.5</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-dot status-active"></span>
+                                        <span class="text-sm">Activo</span>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://images.unsplash.com/photo-1668314681544-c608dcaa37cb" alt="Ver" class="w-4 h-4">
+                                            </button>
+                                            <button class="btn btn-ghost btn-sm p-2">
+                                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-4 h-4">
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- System Alerts -->
+            <section class="mb-8">
+                <div class="card p-6 border-l-4 border-warning">
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-warning/10 p-3 rounded-lg flex-shrink-0">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1475e286a-1764677498835.png" alt="Alerta" class="w-6 h-6">
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold mb-2">Alertas del Sistema</h3>
+                            <ul class="space-y-2 text-sm text-text-secondary">
+                                <li class="flex items-start space-x-2">
+                                    <span class="text-warning mt-1">•</span>
+                                    <span>El límite de solicitudes de API de TMDB está al 85%. Considera actualizar tu plan o esperar hasta el próximo ciclo de facturación.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <span class="text-warning mt-1">•</span>
+                                    <span>12 contenidos pendientes de revisión y aprobación en la cola de moderación.</span>
+                                </li>
+                                <li class="flex items-start space-x-2">
+                                    <span class="text-success mt-1">•</span>
+                                    <span>Copia de seguridad de la base de datos completada exitosamente. Última copia: 15/12/2025 03:00 AM</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-ghost btn-sm">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10bb57cfd-1764634748899.png" alt="Cerrar" class="w-5 h-5">
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden hidden" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    
+    <script>
+        // Toggle Sidebar (Mobile)
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('hidden');
+        }
+        
+        // Close sidebar when clicking outside (Mobile)
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const menuButton = e.target.closest('button[onclick="toggleSidebar()"]');
+            
+            if (!sidebar.contains(e.target) && !menuButton && !overlay.classList.contains('hidden')) {
+                toggleSidebar();
+            }
+        });
+        
+        // Simulate real-time updates
+        setInterval(() => {
+            // Update timestamp
+            const now = new Date();
+            const timeString = now.toLocaleString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // This would update the timestamp in a real application
+            console.log('Dashboard updated:', timeString);
+        }, 60000); // Update every minute
+    </script>
+<script id="dhws-dataInjector" src="../public/dhws-data-injector.js"></script>
+</body>
+</html>

@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Secciones - StreamFusion Movies</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <style>
+        /* Drag and Drop Styles */
+        .section-item {
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        .section-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+        
+        .section-item.drag-over {
+            border-color: var(--color-primary);
+            background-color: var(--color-surface-hover);
+        }
+        
+        /* Code Editor Styles */
+        .code-editor {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            tab-size: 2;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--color-surface-light);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--color-primary);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Analytics Chart */
+        .analytics-bar {
+            height: 100%;
+            background: linear-gradient(to top, var(--color-primary), var(--color-primary-light));
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+        }
+        
+        .analytics-bar:hover {
+            background: linear-gradient(to top, var(--color-primary-light), var(--color-accent));
+        }
+        
+        /* Content Preview Grid */
+        .content-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        @media (min-width: 768px) {
+            .content-preview-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+        
+        /* Sortable Handle */
+        .drag-handle {
+            cursor: grab;
+            touch-action: none;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        /* Filter Pills */
+        .filter-pill {
+            transition: all 0.2s ease;
+        }
+        
+        .filter-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
+        }
+        
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .section-item {
+                padding: 1rem;
+            }
+            
+            .content-preview-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+    </style>
+  <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fstreamfusi9123back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.11"></script>
+  <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.1"></script>
+  </head>
+<body class="bg-background min-h-screen">
+    <!-- Navigation Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-surface border-b border-border">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="../homepage.html" class="flex items-center space-x-2">
+                    <svg class="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="#E50914"/>
+                        <path d="M12 10L20 20L12 30V10Z" fill="white"/>
+                        <path d="M20 10L28 20L20 30V10Z" fill="white" opacity="0.7"/>
+                    </svg>
+                    <span class="text-2xl font-bold text-gradient">StreamFusion</span>
+                </a>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="../admin_dashboard.html" class="text-text-secondary hover:text-primary transition-colors duration-200 flex items-center space-x-2">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_155994d17-1765075118690.png" alt="Panel" class="w-5 h-5">
+                        <span>Panel</span>
+                    </a>
+                    <a href="../content_import.html" class="text-text-secondary hover:text-primary transition-colors duration-200 flex items-center space-x-2">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16f2812fc-1765272757974.png" alt="Importar" class="w-5 h-5">
+                        <span>Importar</span>
+                    </a>
+                    <a href="../section_management.html" class="text-primary flex items-center space-x-2">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_142c8bc34-1765654251205.png" alt="Secciones" class="w-5 h-5">
+                        <span>Secciones</span>
+                    </a>
+                </div>
+                
+                <!-- Right Actions -->
+                <div class="flex items-center space-x-4">
+                    <!-- User Profile -->
+                    <a href="../user_profile.html" class="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_117dbac63-1763295212937.png" alt="Perfil de administrador" class="w-8 h-8 rounded-full object-cover">
+                        <span class="hidden lg:block text-sm text-text-secondary">Admin</span>
+                    </a>
+                    
+                    <!-- Mobile Menu Toggle -->
+                    <button class="md:hidden text-text-primary" onclick="toggleMobileMenu()">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1093c5d5c-1764650234400.png" alt="Menú" class="w-6 h-6">
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobileMenu" class="hidden md:hidden mt-4 space-y-4 animate-slide-up">
+                <a href="../admin_dashboard.html" class="block text-text-secondary hover:text-primary transition-colors duration-200">Panel de Control</a>
+                <a href="../content_import.html" class="block text-text-secondary hover:text-primary transition-colors duration-200">Importar Contenido</a>
+                <a href="../section_management.html" class="block text-primary">Gestión de Secciones</a>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 pt-24 pb-12">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold mb-2">Gestión de Secciones</h1>
+                    <p class="text-text-secondary">Configura y organiza las secciones de contenido en tu plataforma</p>
+                </div>
+                <button onclick="openCreateSectionModal()" class="btn btn-primary flex items-center space-x-2 w-full md:w-auto">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_14dd9cdd5-1765723538823.png" alt="Crear" class="w-5 h-5">
+                    <span>Nueva Sección</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-text-secondary text-sm">Total Secciones</span>
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_142c8bc34-1765654251205.png" alt="Secciones" class="w-5 h-5">
+                </div>
+                <p class="text-3xl font-bold">24</p>
+                <p class="text-xs text-success mt-1">+3 esta semana</p>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-text-secondary text-sm">Secciones Activas</span>
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1127d576d-1764821430622.png" alt="Activas" class="w-5 h-5">
+                </div>
+                <p class="text-3xl font-bold">18</p>
+                <p class="text-xs text-text-secondary mt-1">75% del total</p>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-text-secondary text-sm">Contenido Total</span>
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_123795b74-1764699542153.png" alt="Contenido" class="w-5 h-5">
+                </div>
+                <p class="text-3xl font-bold">1,247</p>
+                <p class="text-xs text-text-secondary mt-1">Elementos únicos</p>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-text-secondary text-sm">Interacciones</span>
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18f8066d3-1765636853423.png" alt="Clics" class="w-5 h-5">
+                </div>
+                <p class="text-3xl font-bold">45.2K</p>
+                <p class="text-xs text-success mt-1">+12% vs mes anterior</p>
+            </div>
+        </div>
+        
+        <!-- Filter and Sort Controls -->
+        <div class="card p-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4">
+                <!-- Search -->
+                <div class="flex-1">
+                    <div class="relative">
+                        <input type="text" placeholder="Buscar secciones..." class="input w-full pl-10" id="searchSections">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_106e49481-1765569041713.png" alt="Buscar" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5">
+                    </div>
+                </div>
+                
+                <!-- Filter by Page -->
+                <select class="input md:w-48" id="filterPage">
+                    <option value="all">Todas las páginas</option>
+                    <option value="homepage">Página Principal</option>
+                    <option value="movies">Página de Películas</option>
+                    <option value="series">Página de Series</option>
+                </select>
+                
+                <!-- Filter by Status -->
+                <select class="input md:w-48" id="filterStatus">
+                    <option value="all">Todos los estados</option>
+                    <option value="active">Activas</option>
+                    <option value="inactive">Inactivas</option>
+                </select>
+                
+                <!-- Sort -->
+                <select class="input md:w-48" id="sortSections">
+                    <option value="position">Por Posición</option>
+                    <option value="name">Por Nombre</option>
+                    <option value="clicks">Por Clics</option>
+                    <option value="date">Por Fecha</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Sections List -->
+        <div class="space-y-4" id="sectionsList">
+            <!-- Section Item 1 - Homepage Featured -->
+            <div class="card section-item" draggable="true" data-section-id="1">
+                <div class="p-6">
+                    <div class="flex items-start gap-4">
+                        <!-- Drag Handle -->
+                        <div class="drag-handle pt-2">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16c5e1a60-1765708219976.png" alt="Arrastrar" class="w-6 h-6">
+                        </div>
+                        
+                        <!-- Section Info -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-semibold mb-2">Destacados de la Semana</h3>
+                                    <div class="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                                        <span class="badge badge-primary">Página Principal</span>
+                                        <span class="badge bg-surface-light text-text-primary">Películas y Series</span>
+                                        <span class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1709e8d19-1765363762760.png" alt="Vistas" class="w-4 h-4">
+                                            <span>12.4K vistas</span>
+                                        </span>
+                                        <span class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18f8066d3-1765636853423.png" alt="Clics" class="w-4 h-4">
+                                            <span>3.2K clics</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Actions -->
+                                <div class="flex items-center space-x-3">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <button onclick="editSection(1)" class="btn btn-ghost p-2" title="Editar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-5 h-5">
+                                    </button>
+                                    <button onclick="duplicateSection(1)" class="btn btn-ghost p-2" title="Duplicar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17de49321-1764698077381.png" alt="Duplicar" class="w-5 h-5">
+                                    </button>
+                                    <button onclick="deleteSection(1)" class="btn btn-ghost p-2 text-error" title="Eliminar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13bd96f78-1765569379915.png" alt="Eliminar" class="w-5 h-5">
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Content Preview -->
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-text-secondary">Contenido (24 elementos)</span>
+                                    <button onclick="manageContent(1)" class="text-sm text-primary hover:text-primary-light transition-colors duration-200">
+                                        Gestionar contenido →
+                                    </button>
+                                </div>
+                                <div class="content-preview-grid">
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1f5067f5d-1765344747587.png" alt="Poster de contenido destacado" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1f5067f5d-1765344747587.png" alt="Poster de contenido destacado" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1f5067f5d-1765344747587.png" alt="Poster de contenido destacado" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1f5067f5d-1765344747587.png" alt="Poster de contenido destacado" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster bg-surface-light rounded flex items-center justify-center text-text-secondary text-sm">
+                                        +20 más
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Analytics Preview -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">CTR</p>
+                                    <p class="text-lg font-semibold text-success">25.8%</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Tiempo Promedio</p>
+                                    <p class="text-lg font-semibold">2m 34s</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Posición</p>
+                                    <p class="text-lg font-semibold">#1</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Última Actualización</p>
+                                    <p class="text-lg font-semibold">Hoy</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section Item 2 - Action Movies -->
+            <div class="card section-item" draggable="true" data-section-id="2">
+                <div class="p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="drag-handle pt-2">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16c5e1a60-1765708219976.png" alt="Arrastrar" class="w-6 h-6">
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-semibold mb-2">Acción Explosiva</h3>
+                                    <div class="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                                        <span class="badge badge-primary">Página de Películas</span>
+                                        <span class="badge bg-surface-light text-text-primary">Solo Películas</span>
+                                        <span class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1709e8d19-1765363762760.png" alt="Vistas" class="w-4 h-4">
+                                            <span>8.7K vistas</span>
+                                        </span>
+                                        <span class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18f8066d3-1765636853423.png" alt="Clics" class="w-4 h-4">
+                                            <span>2.1K clics</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-3">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <button onclick="editSection(2)" class="btn btn-ghost p-2" title="Editar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-5 h-5">
+                                    </button>
+                                    <button onclick="duplicateSection(2)" class="btn btn-ghost p-2" title="Duplicar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17de49321-1764698077381.png" alt="Duplicar" class="w-5 h-5">
+                                    </button>
+                                    <button onclick="deleteSection(2)" class="btn btn-ghost p-2 text-error" title="Eliminar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13bd96f78-1765569379915.png" alt="Eliminar" class="w-5 h-5">
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-text-secondary">Contenido (18 elementos)</span>
+                                    <button onclick="manageContent(2)" class="text-sm text-primary hover:text-primary-light transition-colors duration-200">
+                                        Gestionar contenido →
+                                    </button>
+                                </div>
+                                <div class="content-preview-grid">
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d187f929-1764778195013.png" alt="Poster de película de acción" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d187f929-1764778195013.png" alt="Poster de película de acción" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d187f929-1764778195013.png" alt="Poster de película de acción" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d187f929-1764778195013.png" alt="Poster de película de acción" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster bg-surface-light rounded flex items-center justify-center text-text-secondary text-sm">
+                                        +14 más
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">CTR</p>
+                                    <p class="text-lg font-semibold text-success">24.1%</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Tiempo Promedio</p>
+                                    <p class="text-lg font-semibold">1m 58s</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Posición</p>
+                                    <p class="text-lg font-semibold">#2</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Última Actualización</p>
+                                    <p class="text-lg font-semibold">Hace 2 días</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section Item 3 - Custom HTML Ad Section -->
+            <div class="card section-item" draggable="true" data-section-id="3">
+                <div class="p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="drag-handle pt-2">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16c5e1a60-1765708219976.png" alt="Arrastrar" class="w-6 h-6">
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-semibold mb-2">Promoción Especial - Diciembre</h3>
+                                    <div class="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                                        <span class="badge badge-accent">HTML Personalizado</span>
+                                        <span class="badge badge-primary">Página Principal</span>
+                                        <span class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1709e8d19-1765363762760.png" alt="Vistas" class="w-4 h-4">
+                                            <span>15.2K vistas</span>
+                                        </span>
+                                        <span class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18f8066d3-1765636853423.png" alt="Clics" class="w-4 h-4">
+                                            <span>4.8K clics</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-3">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <button onclick="editSection(3)" class="btn btn-ghost p-2" title="Editar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-5 h-5">
+                                    </button>
+                                    <button onclick="duplicateSection(3)" class="btn btn-ghost p-2" title="Duplicar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17de49321-1764698077381.png" alt="Duplicar" class="w-5 h-5">
+                                    </button>
+                                    <button onclick="deleteSection(3)" class="btn btn-ghost p-2 text-error" title="Eliminar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13bd96f78-1765569379915.png" alt="Eliminar" class="w-5 h-5">
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="bg-surface-light rounded-lg p-4 border border-border">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_131fc89d2-1765039653701.png" alt="HTML" class="w-5 h-5">
+                                        <span class="text-sm font-medium">Sección HTML Personalizada</span>
+                                    </div>
+                                    <p class="text-sm text-text-secondary">Banner promocional con código HTML personalizado y scripts de seguimiento integrados.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">CTR</p>
+                                    <p class="text-lg font-semibold text-success">31.6%</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Tiempo Promedio</p>
+                                    <p class="text-lg font-semibold">3m 12s</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Posición</p>
+                                    <p class="text-lg font-semibold">#3</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Última Actualización</p>
+                                    <p class="text-lg font-semibold">Hace 1 semana</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section Item 4 - Series Drama -->
+            <div class="card section-item" draggable="true" data-section-id="4">
+                <div class="p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="drag-handle pt-2">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16c5e1a60-1765708219976.png" alt="Arrastrar" class="w-6 h-6">
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-semibold mb-2">Dramas Imperdibles</h3>
+                                    <div class="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                                        <span class="badge badge-primary">Página de Series</span>
+                                        <span class="badge bg-surface-light text-text-primary">Solo Series</span>
+                                        <span class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1709e8d19-1765363762760.png" alt="Vistas" class="w-4 h-4">
+                                            <span>6.3K vistas</span>
+                                        </span>
+                                        <span class="flex items-center space-x-1">
+                                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18f8066d3-1765636853423.png" alt="Clics" class="w-4 h-4">
+                                            <span>1.8K clics</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-3">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <button onclick="editSection(4)" class="btn btn-ghost p-2" title="Editar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_186beed82-1764699531223.png" alt="Editar" class="w-5 h-5">
+                                    </button>
+                                    <button onclick="duplicateSection(4)" class="btn btn-ghost p-2" title="Duplicar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17de49321-1764698077381.png" alt="Duplicar" class="w-5 h-5">
+                                    </button>
+                                    <button onclick="deleteSection(4)" class="btn btn-ghost p-2 text-error" title="Eliminar">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13bd96f78-1765569379915.png" alt="Eliminar" class="w-5 h-5">
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-text-secondary">Contenido (15 elementos)</span>
+                                    <button onclick="manageContent(4)" class="text-sm text-primary hover:text-primary-light transition-colors duration-200">
+                                        Gestionar contenido →
+                                    </button>
+                                </div>
+                                <div class="content-preview-grid">
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17f695ec5-1764886120707.png" alt="Poster de serie dramática" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17f695ec5-1764886120707.png" alt="Poster de serie dramática" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17f695ec5-1764886120707.png" alt="Poster de serie dramática" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster relative overflow-hidden rounded group cursor-pointer">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_17f695ec5-1764886120707.png" alt="Poster de serie dramática" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                    </div>
+                                    <div class="aspect-poster bg-surface-light rounded flex items-center justify-center text-text-secondary text-sm">
+                                        +11 más
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">CTR</p>
+                                    <p class="text-lg font-semibold text-warning">28.6%</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Tiempo Promedio</p>
+                                    <p class="text-lg font-semibold">2m 45s</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Posición</p>
+                                    <p class="text-lg font-semibold">#4</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-text-secondary mb-1">Última Actualización</p>
+                                    <p class="text-lg font-semibold">Hace 3 días</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance Analytics Section -->
+        <div class="card p-6 mt-8">
+            <h2 class="text-2xl font-bold mb-6">Análisis de Rendimiento</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Click Through Rate Chart -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">CTR por Sección (Últimos 7 días)</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between mb-2 text-sm">
+                                <span class="text-text-secondary">Destacados de la Semana</span>
+                                <span class="font-semibold">25.8%</span>
+                            </div>
+                            <div class="h-2 bg-surface-light rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-primary to-primary-light rounded-full" style="width: 86%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2 text-sm">
+                                <span class="text-text-secondary">Promoción Especial</span>
+                                <span class="font-semibold">31.6%</span>
+                            </div>
+                            <div class="h-2 bg-surface-light rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-accent to-accent-light rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2 text-sm">
+                                <span class="text-text-secondary">Dramas Imperdibles</span>
+                                <span class="font-semibold">28.6%</span>
+                            </div>
+                            <div class="h-2 bg-surface-light rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-warning to-warning-light rounded-full" style="width: 90%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2 text-sm">
+                                <span class="text-text-secondary">Acción Explosiva</span>
+                                <span class="font-semibold">24.1%</span>
+                            </div>
+                            <div class="h-2 bg-surface-light rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-success to-success-light rounded-full" style="width: 76%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Engagement Metrics -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Métricas de Interacción</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-surface-light rounded-lg p-4">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1709e8d19-1765363762760.png" alt="Vistas" class="w-5 h-5">
+                                <span class="text-sm text-text-secondary">Vistas Totales</span>
+                            </div>
+                            <p class="text-2xl font-bold">42.6K</p>
+                            <p class="text-xs text-success mt-1">+18% vs semana anterior</p>
+                        </div>
+                        <div class="bg-surface-light rounded-lg p-4">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18f8066d3-1765636853423.png" alt="Clics" class="w-5 h-5">
+                                <span class="text-sm text-text-secondary">Clics Totales</span>
+                            </div>
+                            <p class="text-2xl font-bold">11.9K</p>
+                            <p class="text-xs text-success mt-1">+15% vs semana anterior</p>
+                        </div>
+                        <div class="bg-surface-light rounded-lg p-4">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_14464c4ff-1765125167319.png" alt="Tiempo" class="w-5 h-5">
+                                <span class="text-sm text-text-secondary">Tiempo Promedio</span>
+                            </div>
+                            <p class="text-2xl font-bold">2m 37s</p>
+                            <p class="text-xs text-warning mt-1">-3% vs semana anterior</p>
+                        </div>
+                        <div class="bg-surface-light rounded-lg p-4">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1956f0c22-1764659033616.png" alt="Usuarios" class="w-5 h-5">
+                                <span class="text-sm text-text-secondary">Usuarios Únicos</span>
+                            </div>
+                            <p class="text-2xl font-bold">28.4K</p>
+                            <p class="text-xs text-success mt-1">+22% vs semana anterior</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Create Section Modal -->
+    <div id="createSectionModal" class="modal">
+        <div class="modal-overlay" onclick="closeCreateSectionModal()"></div>
+        <div class="modal-content max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold">Crear Nueva Sección</h2>
+                    <button onclick="closeCreateSectionModal()" class="btn btn-ghost p-2">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10bb57cfd-1764634748899.png" alt="Cerrar" class="w-6 h-6">
+                    </button>
+                </div>
+                
+                <form class="space-y-6">
+                    <!-- Basic Information -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Información Básica</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Nombre de la Sección *</label>
+                                <input type="text" class="input" placeholder="Ej: Películas de Acción" required>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Tipo de Contenido *</label>
+                                    <select class="input" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="movies">Solo Películas</option>
+                                        <option value="series">Solo Series</option>
+                                        <option value="both">Películas y Series</option>
+                                        <option value="custom">HTML Personalizado</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Ubicación *</label>
+                                    <select class="input" required>
+                                        <option value="">Seleccionar página</option>
+                                        <option value="homepage">Página Principal</option>
+                                        <option value="movies">Página de Películas</option>
+                                        <option value="series">Página de Series</option>
+                                        <option value="all">Todas las Páginas</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Filters -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Filtros de Contenido</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Géneros</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Acción</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Comedia</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Drama</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Ciencia Ficción</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Terror</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Romance</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Animación</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Documental</button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Año de Lanzamiento</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="number" class="input" placeholder="Desde" min="1900" max="2025">
+                                        <span class="text-text-secondary">-</span>
+                                        <input type="number" class="input" placeholder="Hasta" min="1900" max="2025">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Calificación Mínima</label>
+                                    <select class="input">
+                                        <option value="">Cualquiera</option>
+                                        <option value="7">7.0+</option>
+                                        <option value="8">8.0+</option>
+                                        <option value="9">9.0+</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Plataformas de Streaming</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Netflix</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Amazon Prime</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Disney+</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">HBO Max</button>
+                                    <button type="button" class="filter-pill badge bg-surface-light text-text-primary hover:bg-primary hover:text-white">Apple TV+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Display Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Configuración de Visualización</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-surface-light rounded-lg">
+                                <div>
+                                    <p class="font-medium">Sección Activa</p>
+                                    <p class="text-sm text-text-secondary">Mostrar esta sección en la página</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 bg-surface-light rounded-lg">
+                                <div>
+                                    <p class="font-medium">Actualización Automática</p>
+                                    <p class="text-sm text-text-secondary">Actualizar contenido automáticamente según filtros</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Número Máximo de Elementos</label>
+                                <input type="number" class="input" value="20" min="5" max="50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom HTML Section (conditional) -->
+                    <div id="customHtmlSection" class="hidden">
+                        <h3 class="text-lg font-semibold mb-4">Código HTML Personalizado</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Código HTML</label>
+                                <textarea class="input code-editor" rows="10" placeholder="Ingresa tu código HTML aquí..."></textarea>
+                            </div>
+                            <div class="flex items-center space-x-2 text-sm text-text-secondary">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13c404a1c-1765569041695.png" alt="Info" class="w-4 h-4">
+                                <span>El código HTML se renderizará tal como se ingrese. Asegúrate de que sea seguro y válido.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col md:flex-row gap-3 pt-4 border-t border-border">
+                        <button type="button" onclick="closeCreateSectionModal()" class="btn btn-secondary flex-1">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary flex-1">
+                            Crear Sección
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-border mt-16">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="#E50914"/>
+                        <path d="M12 10L20 20L12 30V10Z" fill="white"/>
+                        <path d="M20 10L28 20L20 30V10Z" fill="white" opacity="0.7"/>
+                    </svg>
+                    <span class="text-xl font-bold text-gradient">StreamFusion</span>
+                </div>
+                <p class="text-sm text-text-secondary text-center">© 2025 StreamFusion Movies. Todos los derechos reservados.</p>
+                <div class="flex items-center space-x-4">
+                    <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1131258c8-1764681918357.png" alt="Ayuda" class="w-5 h-5">
+                    </a>
+                    <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_106b440a8-1765283361263.png" alt="Configuración" class="w-5 h-5">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+        
+        // Modal Functions
+        function openCreateSectionModal() {
+            const modal = document.getElementById('createSectionModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeCreateSectionModal() {
+            const modal = document.getElementById('createSectionModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Section Management Functions
+        function editSection(sectionId) {
+            console.log('Editing section:', sectionId);
+            // In a real application, this would open an edit modal with section data
+            alert('Función de edición - Sección ID: ' + sectionId);
+        }
+        
+        function duplicateSection(sectionId) {
+            console.log('Duplicating section:', sectionId);
+            // In a real application, this would create a copy of the section
+            if (confirm('¿Deseas duplicar esta sección?')) {
+                alert('Sección duplicada exitosamente');
+            }
+        }
+        
+        function deleteSection(sectionId) {
+            console.log('Deleting section:', sectionId);
+            // In a real application, this would delete the section from database
+            if (confirm('¿Estás seguro de que deseas eliminar esta sección? Esta acción no se puede deshacer.')) {
+                alert('Sección eliminada exitosamente');
+            }
+        }
+        
+        function manageContent(sectionId) {
+            console.log('Managing content for section:', sectionId);
+            // In a real application, this would open content management interface
+            alert('Gestión de contenido - Sección ID: ' + sectionId);
+        }
+        
+        // Drag and Drop Functionality
+        let draggedElement = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const sectionItems = document.querySelectorAll('.section-item');
+            
+            sectionItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+            });
+        });
+        
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+        
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            
+            const items = document.querySelectorAll('.section-item');
+            items.forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+        
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        
+        function handleDragEnter(e) {
+            if (this !== draggedElement) {
+                this.classList.add('drag-over');
+            }
+        }
+        
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+        
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const allItems = Array.from(document.querySelectorAll('.section-item'));
+                const draggedIndex = allItems.indexOf(draggedElement);
+                const targetIndex = allItems.indexOf(this);
+                
+                if (draggedIndex < targetIndex) {
+                    this.parentNode.insertBefore(draggedElement, this.nextSibling);
+                } else {
+                    this.parentNode.insertBefore(draggedElement, this);
+                }
+                
+                // In a real application, update positions in database
+                console.log('Section reordered');
+            }
+            
+            return false;
+        }
+        
+        // Filter and Search Functions
+        document.getElementById('searchSections').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const sections = document.querySelectorAll('.section-item');
+            
+            sections.forEach(section => {
+                const title = section.querySelector('h3').textContent.toLowerCase();
+                if (title.includes(searchTerm)) {
+                    section.style.display = '';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        });
+        
+        document.getElementById('filterPage').addEventListener('change', function(e) {
+            console.log('Filtering by page:', e.target.value);
+            // In a real application, filter sections by page
+        });
+        
+        document.getElementById('filterStatus').addEventListener('change', function(e) {
+            console.log('Filtering by status:', e.target.value);
+            // In a real application, filter sections by status
+        });
+        
+        document.getElementById('sortSections').addEventListener('change', function(e) {
+            console.log('Sorting by:', e.target.value);
+            // In a real application, sort sections accordingly
+        });
+        
+        // Toggle Custom HTML Section
+        document.querySelector('select[required]').addEventListener('change', function(e) {
+            const customHtmlSection = document.getElementById('customHtmlSection');
+            if (e.target.value === 'custom') {
+                customHtmlSection.classList.remove('hidden');
+            } else {
+                customHtmlSection.classList.add('hidden');
+            }
+        });
+        
+        // Filter Pills Toggle
+        document.querySelectorAll('.filter-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                this.classList.toggle('badge-primary');
+                this.classList.toggle('bg-surface-light');
+            });
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCreateSectionModal();
+            }
+        });
+    </script>
+<script id="dhws-dataInjector" src="../public/dhws-data-injector.js"></script>
+</body>
+</html>

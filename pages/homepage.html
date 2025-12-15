@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamFusion Movies - Inicio</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <style>
+        /* Hero Carousel Styles */
+        .hero-slide {
+            min-width: 100%;
+            scroll-snap-align: start;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(to right, rgba(20, 20, 20, 0.95) 0%, rgba(20, 20, 20, 0.7) 50%, transparent 100%);
+        }
+        
+        /* Content Carousel Styles */
+        .content-carousel {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .content-carousel::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .content-card {
+            min-width: 180px;
+            flex-shrink: 0;
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        .content-card:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        @media (min-width: 640px) {
+            .content-card {
+                min-width: 220px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .content-card {
+                min-width: 260px;
+            }
+        }
+        
+        /* Quick Actions Overlay */
+        .quick-actions {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .content-card:hover .quick-actions {
+            opacity: 1;
+        }
+        
+        /* Tab Active State */
+        .tab-active {
+            border-bottom: 3px solid var(--color-primary);
+            color: var(--color-text-primary);
+        }
+        
+        /* Carousel Navigation Buttons */
+        .carousel-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .carousel-container:hover .carousel-nav-btn {
+            opacity: 1;
+        }
+        
+        /* Hero Auto-play Animation */
+        @keyframes heroSlide {
+            0%, 20% { transform: translateX(0%); }
+            25%, 45% { transform: translateX(-100%); }
+            50%, 70% { transform: translateX(-200%); }
+            75%, 95% { transform: translateX(-300%); }
+            100% { transform: translateX(0%); }
+        }
+        
+        .hero-auto-play {
+            animation: heroSlide 24s infinite ease-in-out;
+        }
+    </style>
+  <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fstreamfusi9123back.builtwithrocket.new&_be=https%3A%2F%2Fapplication.rocket.new&_v=0.1.11"></script>
+  <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.1"></script>
+  </head>
+<body class="bg-background min-h-screen">
+    <!-- Navigation Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-background to-transparent transition-all duration-300" id="mainHeader">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="homepage.html" class="flex items-center space-x-2">
+                    <svg class="w-10 h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="#E50914"/>
+                        <path d="M12 10L20 20L12 30V10Z" fill="white"/>
+                        <path d="M20 10L28 20L20 30V10Z" fill="white" opacity="0.7"/>
+                    </svg>
+                    <span class="text-2xl font-bold text-gradient">StreamFusion</span>
+                </a>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="homepage.html" class="text-text-primary hover:text-primary transition-colors duration-200">Inicio</a>
+                    <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">Películas</a>
+                    <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">Series</a>
+                    <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">Mi Lista</a>
+                </div>
+                
+                <!-- Right Actions -->
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <button class="text-text-primary hover:text-primary transition-colors duration-200" onclick="toggleSearch()">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_106e49481-1765569041713.png" alt="Buscar" class="w-6 h-6">
+                    </button>
+                    
+                    <!-- User Profile -->
+                    <a href="user_profile.html" class="flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1c23820a0-1765705658681.png" alt="Perfil de usuario" class="w-8 h-8 rounded-full object-cover">
+                    </a>
+                    
+                    <!-- Admin Access (if applicable) -->
+                    <a href="admin_dashboard.html" class="hidden lg:block text-text-secondary hover:text-accent transition-colors duration-200">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_11b2bd62f-1765815276410.png" alt="Panel de administración" class="w-6 h-6">
+                    </a>
+                    
+                    <!-- Mobile Menu Toggle -->
+                    <button class="md:hidden text-text-primary" onclick="toggleMobileMenu()">
+                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1093c5d5c-1764650234400.png" alt="Menú" class="w-6 h-6">
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search Bar (Hidden by default) -->
+            <div id="searchBar" class="hidden mt-4 animate-slide-up">
+                <div class="relative">
+                    <input type="text" placeholder="Buscar películas, series..." class="input w-full pl-12" id="searchInput">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d8a7bdb1-1765713520953.png" alt="Icono de búsqueda" class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5">
+                </div>
+            </div>
+            
+            <!-- Mobile Menu (Hidden by default) -->
+            <div id="mobileMenu" class="hidden md:hidden mt-4 space-y-4 animate-slide-up">
+                <a href="homepage.html" class="block text-text-primary hover:text-primary transition-colors duration-200">Inicio</a>
+                <a href="javascript:void(0)" class="block text-text-secondary hover:text-primary transition-colors duration-200">Películas</a>
+                <a href="javascript:void(0)" class="block text-text-secondary hover:text-primary transition-colors duration-200">Series</a>
+                <a href="javascript:void(0)" class="block text-text-secondary hover:text-primary transition-colors duration-200">Mi Lista</a>
+                <a href="admin_dashboard.html" class="block text-text-secondary hover:text-accent transition-colors duration-200">Panel Admin</a>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Hero Carousel Section -->
+    <section class="relative h-screen overflow-hidden" id="heroSection">
+        <div class="flex h-full hero-auto-play" id="heroCarousel">
+            <!-- Hero Slide 1 -->
+            <div class="hero-slide relative">
+                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1dedfb5ff-1765815276775.png" alt="Película destacada: Aventura épica en tierras desconocidas" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                <div class="absolute inset-0 hero-gradient"></div>
+                <div class="absolute inset-0 flex items-center">
+                    <div class="container mx-auto px-4 md:px-8 max-w-2xl">
+                        <div class="space-y-4 animate-fade-in">
+                            <div class="flex items-center space-x-2">
+                                <span class="badge badge-primary">Destacado</span>
+                                <span class="badge badge-accent">⭐ 8.9</span>
+                            </div>
+                            <h1 class="text-4xl md:text-6xl font-bold">El Reino Perdido</h1>
+                            <p class="text-lg md:text-xl text-text-secondary max-w-xl">Una expedición arqueológica descubre una civilización antigua que cambiará el curso de la historia. Una aventura épica llena de misterio y acción.</p>
+                            <div class="flex items-center space-x-4 text-sm text-text-secondary">
+                                <span>2025</span>
+                                <span>•</span>
+                                <span>2h 28min</span>
+                                <span>•</span>
+                                <span>Aventura, Acción</span>
+                            </div>
+                            <div class="flex items-center space-x-4 pt-4">
+                                <button class="btn btn-primary flex items-center space-x-2">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-6 h-6">
+                                    <span>Reproducir</span>
+                                </button>
+                                <button class="btn btn-secondary flex items-center space-x-2">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12b8adcb8-1765272757252.png" alt="Más información" class="w-6 h-6">
+                                    <span>Más Info</span>
+                                </button>
+                                <button class="btn btn-ghost">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13233ce22-1764676196998.png" alt="Agregar a mi lista" class="w-6 h-6">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hero Slide 2 -->
+            <div class="hero-slide relative">
+                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_14c267251-1765059688103.png" alt="Serie destacada: Drama intenso sobre secretos familiares" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                <div class="absolute inset-0 hero-gradient"></div>
+                <div class="absolute inset-0 flex items-center">
+                    <div class="container mx-auto px-4 md:px-8 max-w-2xl">
+                        <div class="space-y-4 animate-fade-in">
+                            <div class="flex items-center space-x-2">
+                                <span class="badge badge-primary">Nueva Temporada</span>
+                                <span class="badge badge-accent">⭐ 9.2</span>
+                            </div>
+                            <h1 class="text-4xl md:text-6xl font-bold">Secretos de Familia</h1>
+                            <p class="text-lg md:text-xl text-text-secondary max-w-xl">Cuando un patriarca muere, sus hijos descubren que todo lo que creían saber sobre su familia era una mentira. Un drama intenso que te mantendrá al borde del asiento.</p>
+                            <div class="flex items-center space-x-4 text-sm text-text-secondary">
+                                <span>Temporada 3</span>
+                                <span>•</span>
+                                <span>10 episodios</span>
+                                <span>•</span>
+                                <span>Drama, Suspenso</span>
+                            </div>
+                            <div class="flex items-center space-x-4 pt-4">
+                                <button class="btn btn-primary flex items-center space-x-2">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-6 h-6">
+                                    <span>Ver Ahora</span>
+                                </button>
+                                <button class="btn btn-secondary flex items-center space-x-2">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12b8adcb8-1765272757252.png" alt="Más información" class="w-6 h-6">
+                                    <span>Más Info</span>
+                                </button>
+                                <button class="btn btn-ghost">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13233ce22-1764676196998.png" alt="Agregar a mi lista" class="w-6 h-6">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hero Slide 3 -->
+            <div class="hero-slide relative">
+                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13310a225-1765815275988.png" alt="Película destacada: Comedia romántica en la ciudad" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                <div class="absolute inset-0 hero-gradient"></div>
+                <div class="absolute inset-0 flex items-center">
+                    <div class="container mx-auto px-4 md:px-8 max-w-2xl">
+                        <div class="space-y-4 animate-fade-in">
+                            <div class="flex items-center space-x-2">
+                                <span class="badge badge-primary">Tendencia</span>
+                                <span class="badge badge-accent">⭐ 8.5</span>
+                            </div>
+                            <h1 class="text-4xl md:text-6xl font-bold">Amor en Manhattan</h1>
+                            <p class="text-lg md:text-xl text-text-secondary max-w-xl">Dos extraños se encuentran en la ciudad que nunca duerme y descubren que el amor puede aparecer en los lugares más inesperados. Una comedia romántica encantadora.</p>
+                            <div class="flex items-center space-x-4 text-sm text-text-secondary">
+                                <span>2025</span>
+                                <span>•</span>
+                                <span>1h 52min</span>
+                                <span>•</span>
+                                <span>Romance, Comedia</span>
+                            </div>
+                            <div class="flex items-center space-x-4 pt-4">
+                                <button class="btn btn-primary flex items-center space-x-2">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-6 h-6">
+                                    <span>Reproducir</span>
+                                </button>
+                                <button class="btn btn-secondary flex items-center space-x-2">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12b8adcb8-1765272757252.png" alt="Más información" class="w-6 h-6">
+                                    <span>Más Info</span>
+                                </button>
+                                <button class="btn btn-ghost">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13233ce22-1764676196998.png" alt="Agregar a mi lista" class="w-6 h-6">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hero Slide 4 -->
+            <div class="hero-slide relative">
+                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1c574536a-1765815276970.png" alt="Serie destacada: Ciencia ficción futurista" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                <div class="absolute inset-0 hero-gradient"></div>
+                <div class="absolute inset-0 flex items-center">
+                    <div class="container mx-auto px-4 md:px-8 max-w-2xl">
+                        <div class="space-y-4 animate-fade-in">
+                            <div class="flex items-center space-x-2">
+                                <span class="badge badge-primary">Exclusivo</span>
+                                <span class="badge badge-accent">⭐ 9.4</span>
+                            </div>
+                            <h1 class="text-4xl md:text-6xl font-bold">Horizonte 2099</h1>
+                            <p class="text-lg md:text-xl text-text-secondary max-w-xl">En un futuro donde la humanidad ha colonizado el sistema solar, una conspiración amenaza con destruir todo. Una serie de ciencia ficción épica que redefine el género.</p>
+                            <div class="flex items-center space-x-4 text-sm text-text-secondary">
+                                <span>Temporada 2</span>
+                                <span>•</span>
+                                <span>12 episodios</span>
+                                <span>•</span>
+                                <span>Ciencia Ficción</span>
+                            </div>
+                            <div class="flex items-center space-x-4 pt-4">
+                                <button class="btn btn-primary flex items-center space-x-2">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-6 h-6">
+                                    <span>Ver Ahora</span>
+                                </button>
+                                <button class="btn btn-secondary flex items-center space-x-2">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12b8adcb8-1765272757252.png" alt="Más información" class="w-6 h-6">
+                                    <span>Más Info</span>
+                                </button>
+                                <button class="btn btn-ghost">
+                                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13233ce22-1764676196998.png" alt="Agregar a mi lista" class="w-6 h-6">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hero Navigation Dots -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
+            <button class="w-3 h-3 rounded-full bg-primary" onclick="goToHeroSlide(0)"></button>
+            <button class="w-3 h-3 rounded-full bg-text-tertiary hover:bg-text-secondary transition-colors duration-200" onclick="goToHeroSlide(1)"></button>
+            <button class="w-3 h-3 rounded-full bg-text-tertiary hover:bg-text-secondary transition-colors duration-200" onclick="goToHeroSlide(2)"></button>
+            <button class="w-3 h-3 rounded-full bg-text-tertiary hover:bg-text-secondary transition-colors duration-200" onclick="goToHeroSlide(3)"></button>
+        </div>
+    </section>
+    
+    <!-- Content Filter Tabs -->
+    <section class="sticky top-16 z-40 bg-background/95 backdrop-blur-medium border-b border-border">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center space-x-8 overflow-x-auto scrollbar-hide py-4">
+                <button class="tab-active whitespace-nowrap pb-2 text-sm font-medium transition-all duration-200" onclick="filterContent('all')">
+                    Todo el Contenido
+                </button>
+                <button class="text-text-secondary whitespace-nowrap pb-2 text-sm font-medium hover:text-text-primary transition-all duration-200" onclick="filterContent('movies')">
+                    Solo Películas
+                </button>
+                <button class="text-text-secondary whitespace-nowrap pb-2 text-sm font-medium hover:text-text-primary transition-all duration-200" onclick="filterContent('series')">
+                    Solo Series
+                </button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Content Carousels -->
+    <main class="container mx-auto px-4 py-8 space-y-12">
+        <!-- Trending Now Section -->
+        <section class="space-y-4" id="trendingSection">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl md:text-3xl font-bold">Tendencias Ahora</h2>
+                <a href="javascript:void(0)" class="text-primary hover:text-primary-light transition-colors duration-200 flex items-center space-x-1">
+                    <span class="text-sm">Ver Todo</span>
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver más" class="w-5 h-5">
+                </a>
+            </div>
+            
+            <div class="relative carousel-container">
+                <button class="carousel-nav-btn left-0 btn btn-secondary rounded-full w-12 h-12 flex items-center justify-center" onclick="scrollCarousel('trending', -300)">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13205c3d8-1765252084774.png" alt="Anterior" class="w-6 h-6">
+                </button>
+                
+                <div class="content-carousel" id="trendingCarousel">
+                    <!-- Content Card 1 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1cd158a39-1765239463406.png" alt="Poster de película: Noche de Acción" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.7</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Noche de Acción</h3>
+                                <p class="text-xs text-text-secondary">2025 • Acción</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 2 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_153c1b2bb-1764677117574.png" alt="Poster de serie: Misterio Urbano" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 9.1</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Misterio Urbano</h3>
+                                <p class="text-xs text-text-secondary">T1 • Suspenso</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 3 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10887ed34-1764742196294.png" alt="Poster de película: Comedia del Verano" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.3</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Comedia del Verano</h3>
+                                <p class="text-xs text-text-secondary">2025 • Comedia</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 4 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1e579521c-1765106215480.png" alt="Poster de serie: Drama Familiar" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.9</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Drama Familiar</h3>
+                                <p class="text-xs text-text-secondary">T2 • Drama</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 5 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18f4358ef-1765206711225.png" alt="Poster de película: Aventura Espacial" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 9.3</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Aventura Espacial</h3>
+                                <p class="text-xs text-text-secondary">2025 • Sci-Fi</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 6 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d86ec0d9-1765717722481.png" alt="Poster de película: Romance en París" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.6</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Romance en París</h3>
+                                <p class="text-xs text-text-secondary">2025 • Romance</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="carousel-nav-btn right-0 btn btn-secondary rounded-full w-12 h-12 flex items-center justify-center" onclick="scrollCarousel('trending', 300)">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10fed1fb4-1765100473885.png" alt="Siguiente" class="w-6 h-6">
+                </button>
+            </div>
+        </section>
+        
+        <!-- Recently Added Section -->
+        <section class="space-y-4" id="recentSection">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl md:text-3xl font-bold">Recién Agregado</h2>
+                <a href="javascript:void(0)" class="text-primary hover:text-primary-light transition-colors duration-200 flex items-center space-x-1">
+                    <span class="text-sm">Ver Todo</span>
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver más" class="w-5 h-5">
+                </a>
+            </div>
+            
+            <div class="relative carousel-container">
+                <button class="carousel-nav-btn left-0 btn btn-secondary rounded-full w-12 h-12 flex items-center justify-center" onclick="scrollCarousel('recent', -300)">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13205c3d8-1765252084774.png" alt="Anterior" class="w-6 h-6">
+                </button>
+                
+                <div class="content-carousel" id="recentCarousel">
+                    <!-- Content Card 1 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10685afe7-1764668724947.png" alt="Poster de película: Thriller Nocturno" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge badge-primary text-xs">Nuevo</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.4</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Thriller Nocturno</h3>
+                                <p class="text-xs text-text-secondary">2025 • Thriller</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 2 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1b74943e3-1764766111527.png" alt="Poster de serie: Comedia Familiar" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge badge-primary text-xs">Nuevo</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.8</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Comedia Familiar</h3>
+                                <p class="text-xs text-text-secondary">T1 • Comedia</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 3 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eea2616c-1764641403128.png" alt="Poster de película: Documental Natural" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge badge-primary text-xs">Nuevo</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 9.0</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Documental Natural</h3>
+                                <p class="text-xs text-text-secondary">2025 • Documental</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 4 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_187ac7880-1764760295787.png" alt="Poster de serie: Animación Infantil" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge badge-primary text-xs">Nuevo</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.5</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Animación Infantil</h3>
+                                <p class="text-xs text-text-secondary">T1 • Animación</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 5 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10685afe7-1764668724947.png" alt="Poster de película: Terror Psicológico" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge badge-primary text-xs">Nuevo</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.2</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Terror Psicológico</h3>
+                                <p class="text-xs text-text-secondary">2025 • Terror</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 6 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1c85a7696-1764677118827.png" alt="Poster de serie: Drama Histórico" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge badge-primary text-xs">Nuevo</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 9.1</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Drama Histórico</h3>
+                                <p class="text-xs text-text-secondary">T1 • Historia</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="carousel-nav-btn right-0 btn btn-secondary rounded-full w-12 h-12 flex items-center justify-center" onclick="scrollCarousel('recent', 300)">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10fed1fb4-1765100473885.png" alt="Siguiente" class="w-6 h-6">
+                </button>
+            </div>
+        </section>
+        
+        <!-- Action Movies Section -->
+        <section class="space-y-4" id="actionSection">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl md:text-3xl font-bold">Acción y Aventura</h2>
+                <a href="javascript:void(0)" class="text-primary hover:text-primary-light transition-colors duration-200 flex items-center space-x-1">
+                    <span class="text-sm">Ver Todo</span>
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver más" class="w-5 h-5">
+                </a>
+            </div>
+            
+            <div class="relative carousel-container">
+                <button class="carousel-nav-btn left-0 btn btn-secondary rounded-full w-12 h-12 flex items-center justify-center" onclick="scrollCarousel('action', -300)">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13205c3d8-1765252084774.png" alt="Anterior" class="w-6 h-6">
+                </button>
+                
+                <div class="content-carousel" id="actionCarousel">
+                    <!-- Content Card 1 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1ad2efe3c-1765815275343.png" alt="Poster de película: Explosión Total" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.6</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Explosión Total</h3>
+                                <p class="text-xs text-text-secondary">2025 • Acción</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 2 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://images.unsplash.com/photo-1614346240914-94e45b87fadd" alt="Poster de película: Misión Imposible" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 9.0</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Misión Imposible</h3>
+                                <p class="text-xs text-text-secondary">2025 • Acción</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 3 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1a96696a8-1765815278021.png" alt="Poster de película: Velocidad Extrema" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.4</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Velocidad Extrema</h3>
+                                <p class="text-xs text-text-secondary">2025 • Acción</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 4 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_20487d51e-1765815278975.png" alt="Poster de película: Guerra Total" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.8</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Guerra Total</h3>
+                                <p class="text-xs text-text-secondary">2025 • Acción</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 5 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_12f820eea-1764821370602.png" alt="Poster de película: Héroe Urbano" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.7</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Héroe Urbano</h3>
+                                <p class="text-xs text-text-secondary">2025 • Acción</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 6 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d0848cc3-1765646420569.png" alt="Poster de película: Rescate Extremo" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.5</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Rescate Extremo</h3>
+                                <p class="text-xs text-text-secondary">2025 • Acción</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="carousel-nav-btn right-0 btn btn-secondary rounded-full w-12 h-12 flex items-center justify-center" onclick="scrollCarousel('action', 300)">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10fed1fb4-1765100473885.png" alt="Siguiente" class="w-6 h-6">
+                </button>
+            </div>
+        </section>
+        
+        <!-- Popular on StreamFusion Section -->
+        <section class="space-y-4" id="popularSection">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl md:text-3xl font-bold">Popular en StreamFusion</h2>
+                <a href="javascript:void(0)" class="text-primary hover:text-primary-light transition-colors duration-200 flex items-center space-x-1">
+                    <span class="text-sm">Ver Todo</span>
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1db254b04-1764686649002.png" alt="Ver más" class="w-5 h-5">
+                </a>
+            </div>
+            
+            <div class="relative carousel-container">
+                <button class="carousel-nav-btn left-0 btn btn-secondary rounded-full w-12 h-12 flex items-center justify-center" onclick="scrollCarousel('popular', -300)">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13205c3d8-1765252084774.png" alt="Anterior" class="w-6 h-6">
+                </button>
+                
+                <div class="content-carousel" id="popularCarousel">
+                    <!-- Content Card 1 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_153c1b2bb-1764677117574.png" alt="Poster de serie: Misterio Criminal" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge bg-accent/90 text-background text-xs font-bold">#1</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 9.5</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Misterio Criminal</h3>
+                                <p class="text-xs text-text-secondary">T3 • Crimen</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 2 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_13143a85e-1764677118655.png" alt="Poster de película: Épica Medieval" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge bg-accent/90 text-background text-xs font-bold">#2</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 9.2</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Épica Medieval</h3>
+                                <p class="text-xs text-text-secondary">2025 • Fantasía</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 3 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1a16f59be-1764682598637.png" alt="Poster de serie: Comedia Stand-up" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge bg-accent/90 text-background text-xs font-bold">#3</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.9</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Comedia Stand-up</h3>
+                                <p class="text-xs text-text-secondary">T1 • Comedia</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 4 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d187f929-1764778195013.png" alt="Poster de película: Ciencia Ficción" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge bg-accent/90 text-background text-xs font-bold">#4</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 9.3</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Ciencia Ficción</h3>
+                                <p class="text-xs text-text-secondary">2025 • Sci-Fi</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 5 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1197bf27d-1765361462107.png" alt="Poster de serie: Drama Legal" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge bg-accent/90 text-background text-xs font-bold">#5</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.8</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Drama Legal</h3>
+                                <p class="text-xs text-text-secondary">T4 • Drama</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Card 6 -->
+                    <div class="content-card">
+                        <div class="card card-hover relative overflow-hidden rounded-lg group">
+                            <div class="aspect-poster relative">
+                                <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1499a73e0-1765815276011.png" alt="Poster de película: Aventura Tropical" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop'; this.onerror=null;">
+                                <div class="absolute top-2 left-2">
+                                    <span class="badge bg-accent/90 text-background text-xs font-bold">#6</span>
+                                </div>
+                                <div class="absolute top-2 right-2">
+                                    <span class="badge badge-accent text-xs">⭐ 8.7</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col justify-end p-4 space-y-2">
+                                <h3 class="font-semibold text-sm">Aventura Tropical</h3>
+                                <p class="text-xs text-text-secondary">2025 • Aventura</p>
+                                <div class="flex items-center space-x-2">
+                                    <button class="btn btn-primary btn-sm flex-1 text-xs py-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1eac53be7-1765386116843.png" alt="Reproducir" class="w-4 h-4">
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm p-2">
+                                        <img src="https://img.rocket.new/generatedImages/rocket_gen_img_133f61ccb-1764650954595.png" alt="Agregar" class="w-4 h-4">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="carousel-nav-btn right-0 btn btn-secondary rounded-full w-12 h-12 flex items-center justify-center" onclick="scrollCarousel('popular', 300)">
+                    <img src="https://img.rocket.new/generatedImages/rocket_gen_img_10fed1fb4-1765100473885.png" alt="Siguiente" class="w-6 h-6">
+                </button>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-border mt-16">
+        <div class="container mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Brand Section -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="8" fill="#E50914"/>
+                            <path d="M12 10L20 20L12 30V10Z" fill="white"/>
+                            <path d="M20 10L28 20L20 30V10Z" fill="white" opacity="0.7"/>
+                        </svg>
+                        <span class="text-xl font-bold text-gradient">StreamFusion</span>
+                    </div>
+                    <p class="text-sm text-text-secondary">Tu plataforma de streaming favorita con miles de películas y series.</p>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="font-semibold mb-4">Enlaces Rápidos</h3>
+                    <ul class="space-y-2 text-sm text-text-secondary">
+                        <li><a href="homepage.html" class="hover:text-primary transition-colors duration-200">Inicio</a></li>
+                        <li><a href="javascript:void(0)" class="hover:text-primary transition-colors duration-200">Películas</a></li>
+                        <li><a href="javascript:void(0)" class="hover:text-primary transition-colors duration-200">Series</a></li>
+                        <li><a href="javascript:void(0)" class="hover:text-primary transition-colors duration-200">Mi Lista</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Support -->
+                <div>
+                    <h3 class="font-semibold mb-4">Soporte</h3>
+                    <ul class="space-y-2 text-sm text-text-secondary">
+                        <li><a href="javascript:void(0)" class="hover:text-primary transition-colors duration-200">Centro de Ayuda</a></li>
+                        <li><a href="javascript:void(0)" class="hover:text-primary transition-colors duration-200">Términos de Uso</a></li>
+                        <li><a href="javascript:void(0)" class="hover:text-primary transition-colors duration-200">Privacidad</a></li>
+                        <li><a href="javascript:void(0)" class="hover:text-primary transition-colors duration-200">Contacto</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Social Media -->
+                <div>
+                    <h3 class="font-semibold mb-4">Síguenos</h3>
+                    <div class="flex space-x-4">
+                        <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_18d457356-1764678165046.png" alt="Facebook" class="w-6 h-6">
+                        </a>
+                        <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_16b971a2d-1764655968895.png" alt="Twitter" class="w-6 h-6">
+                        </a>
+                        <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1f97f5c3f-1764677494753.png" alt="Instagram" class="w-6 h-6">
+                        </a>
+                        <a href="javascript:void(0)" class="text-text-secondary hover:text-primary transition-colors duration-200">
+                            <img src="https://img.rocket.new/generatedImages/rocket_gen_img_1d6155563-1765202253045.png" alt="YouTube" class="w-6 h-6">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-border mt-8 pt-8 text-center text-sm text-text-secondary">
+                <p>© 2025 StreamFusion Movies. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Toggle Search Bar
+        function toggleSearch() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                document.getElementById('searchInput').focus();
+            }
+        }
+        
+        // Toggle Mobile Menu
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+        
+        // Scroll Carousel
+        function scrollCarousel(carouselId, amount) {
+            const carousel = document.getElementById(carouselId + 'Carousel');
+            carousel.scrollBy({
+                left: amount,
+                behavior: 'smooth'
+            });
+        }
+        
+        // Hero Carousel Navigation
+        function goToHeroSlide(index) {
+            const heroCarousel = document.getElementById('heroCarousel');
+            const slideWidth = heroCarousel.offsetWidth;
+            heroCarousel.style.transform = `translateX(-${index * slideWidth}px)`;
+            
+            // Update dots
+            const dots = document.querySelectorAll('#heroSection button[onclick^="goToHeroSlide"]');
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.remove('bg-text-tertiary', 'hover:bg-text-secondary');
+                    dot.classList.add('bg-primary');
+                } else {
+                    dot.classList.remove('bg-primary');
+                    dot.classList.add('bg-text-tertiary', 'hover:bg-text-secondary');
+                }
+            });
+        }
+        
+        // Content Filter
+        function filterContent(type) {
+            // Update tab active state
+            const tabs = document.querySelectorAll('section button[onclick^="filterContent"]');
+            tabs.forEach(tab => {
+                tab.classList.remove('tab-active', 'text-text-primary');
+                tab.classList.add('text-text-secondary');
+            });
+            event.target.classList.remove('text-text-secondary');
+            event.target.classList.add('tab-active', 'text-text-primary');
+            
+            // In a real application, this would filter the content
+            console.log('Filtering content by:', type);
+        }
+        
+        // Header Scroll Effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 100) {
+                header.classList.remove('bg-gradient-to-b', 'from-background', 'to-transparent');
+                header.classList.add('bg-background/95', 'backdrop-blur-medium', 'shadow-soft');
+            } else {
+                header.classList.remove('bg-background/95', 'backdrop-blur-medium', 'shadow-soft');
+                header.classList.add('bg-gradient-to-b', 'from-background', 'to-transparent');
+            }
+        });
+        
+        // Pause hero auto-play on hover
+        const heroSection = document.getElementById('heroSection');
+        const heroCarousel = document.getElementById('heroCarousel');
+        
+        heroSection.addEventListener('mouseenter', () => {
+            heroCarousel.style.animationPlayState = 'paused';
+        });
+        
+        heroSection.addEventListener('mouseleave', () => {
+            heroCarousel.style.animationPlayState = 'running';
+        });
+    </script>
+<script id="dhws-dataInjector" src="../public/dhws-data-injector.js"></script>
+</body>
+</html>
