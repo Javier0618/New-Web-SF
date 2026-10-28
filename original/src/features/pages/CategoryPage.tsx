@@ -1,0 +1,76 @@
+import { useMemo } from "react";
+import { useParams, useNavigate } from "@/lib/react-router-shim";
+import Navbar from "@/components/layout/Navbar";
+import ContentCard from "@/components/home/ContentCard";
+import { useContent } from "@/hooks/useContent";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { getGenreName } from "@/lib/genres";
+import { Loader2, ArrowLeft } from "lucide-react";
+
+const CategoryPage = () => {
+  const { type } = useParams<{ type: string }>();
+  const navigate = useNavigate();
+  const { content, loading } = useContent();
+
+  const platformIds = ["netflix", "disney", "hbo", "prime", "paramount"];
+  const platformLabels: Record<string, string> = {
+    netflix: "Netflix", disney: "Disney+", hbo: "Max", prime: "Prime Video", paramount: "Paramount+",
+  };
+
+  const isMediaType = type === "movies" || type === "series";
+  const isPlatform = !!type && platformIds.includes(type);
+  const mediaFilter = type === "movies" ? "movie" : "tv";
+
+  const filtered = useMemo(() => {
+    if (isMediaType) return content.filter((c) => c.media_type === mediaFilter);
+    if (isPlatform) return content.filter((c) => c.display_options?.platforms?.includes(type!));
+    return content.filter((c) => c.genres?.some((g) => g === type || getGenreName(g) === decodeURIComponent(type || "")));
+  }, [content, type, isMediaType, isPlatform, mediaFilter]);
+
+  const title = isMediaType
+    ? type === "movies" ? "Películas" : "Series"
+    : isPlatform
+    ? platformLabels[type!] ?? decodeURIComponent(type || "")
+    : decodeURIComponent(type || "");
+
+  const { displayed, hasMore, sentinelRef } = useInfiniteScroll(filtered);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="pt-24 pb-16 px-4 md:px-12">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl md:text-3xl font-extrabold">{title}</h1>
+          <button 
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm font-bold"
+          >
+            <ArrowLeft className="w-4 h-4" /> Inicio
+          </button>
+        </div>
+        {loading ? (
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
+            {Array.from({ length: 18 }).map((_, i) => (
+              <div key={i} className="aspect-[2/3] bg-muted rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-muted-foreground">No se encontró contenido.</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">
+              {displayed.map((item, i) => (
+                <ContentCard key={item.docId || item.id} content={item} index={i % 30} grid />
+              ))}
+            </div>
+            <div ref={sentinelRef} className="flex justify-center py-8">
+              {hasMore && <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CategoryPage;
