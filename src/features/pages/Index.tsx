@@ -1,3 +1,4 @@
+import LoadingScreen from "@/components/LoadingScreen";
 import { useMemo, useRef, Fragment, type ReactNode } from "react";
 import Hero from "@/components/home/Hero";
 import ContentCarousel from "@/components/home/ContentCarousel";
@@ -230,11 +231,7 @@ const Index = () => {
   // las más grandes; el resto queda a un clic en "Explorar todas las categorías",
   // para que la página no se vuelva una lista interminable.
   const GENRE_ROW_LIMIT = 8;
-  const normKey = (g: string) =>
-    g
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "");
+  const normKey = (g: string) => g.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const visibleGenres = Array.from(genreGroups.entries())
     .filter(([genre]) => isCategoryVisible(normKey(genre)))
     .sort((a, b) => b[1].length - a[1].length);
@@ -243,25 +240,10 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <>
         <Navbar />
-        <div className="h-[88vh] animate-pulse bg-muted" />
-        <div className="px-4 md:px-10 mt-8 space-y-8">
-          {[1, 2, 3].map((i) => (
-            <div key={i}>
-              <div className="h-6 w-48 bg-muted rounded mb-4" />
-              <div className="flex gap-3">
-                {[1, 2, 3, 4, 5].map((j) => (
-                  <div
-                    key={j}
-                    className="w-[176px] aspect-[2/3] bg-muted rounded-xl flex-shrink-0"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+        <LoadingScreen />
+      </>
     );
   }
 
@@ -287,7 +269,10 @@ const Index = () => {
             continue: <ContinueWatchingRow content={content} />,
             enEstreno:
               isCategoryVisible("enEstreno") && enEstreno.length > 0 ? (
-                <ContentCarousel title={titles.enEstreno} items={enEstreno.slice(0, sections.enEstreno)} />
+                <ContentCarousel
+                  title={titles.enEstreno}
+                  items={enEstreno.slice(0, sections.enEstreno)}
+                />
               ) : null,
             recienAgregado:
               isCategoryVisible("recienAgregado") && recienAgregado.length > 0 ? (
@@ -306,7 +291,10 @@ const Index = () => {
               ) : null,
             top10:
               top10Items.length > 0 ? (
-                <Top10Carousel title={webConfig?.top10?.title || "Lo más visto hoy"} items={top10Items} />
+                <Top10Carousel
+                  title={webConfig?.top10?.title || "Lo más visto hoy"}
+                  items={top10Items}
+                />
               ) : null,
             series:
               isCategoryVisible("series") && series.length > 0 ? (

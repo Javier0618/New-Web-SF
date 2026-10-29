@@ -1,3 +1,4 @@
+import LoadingScreen, { LoadingOverlay } from "@/components/LoadingScreen";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -35,11 +36,7 @@ const WatchPage = lazy(() => import("@/features/pages/WatchPage"));
 const NotFound = lazy(() => import("@/features/pages/NotFound"));
 
 function PageFallback() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
-    </div>
-  );
+  return <LoadingScreen />;
 }
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Footer from "@/components/layout/Footer";
@@ -74,11 +71,7 @@ function LicenseGate({ children }: { children: React.ReactNode }) {
   const { status } = useLicense();
 
   if (status.state === "checking") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (status.state === "invalid") {
@@ -111,37 +104,38 @@ export default function App() {
                 <AnalyticsTracker />
                 <div className="min-h-screen">
                   <Suspense fallback={<PageFallback />}>
-                  <Routes>
-                    <Route path="/" element={<IndexPage />} />
-                    <Route path="/movies" element={<MoviesPage />} />
-                    <Route path="/series" element={<SeriesPage />} />
-                    <Route path="/animes" element={<AnimesPage />} />
-                    <Route path="/doramas" element={<DoramasPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route
-                      path="/admin"
-                      element={
-                        <ProtectedRoute>
-                          <AdminPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/messages" element={<MessagesPage />} />
-                    <Route path="/search" element={<SearchPage />} />
-                    <Route path="/content/:id" element={<ContentPage />} />
-                    <Route path="/pelicula/:slug" element={<ContentPage />} />
-                    <Route path="/serie/:slug" element={<ContentPage />} />
-                    <Route path="/category/:type" element={<CategoryPage />} />
-                    <Route path="/watch/:id" element={<WatchPage />} />
-                    <Route path="*" element={<NotFound />} />
-                    <Route path="/__not-found" element={<NotFoundPage />} />
-                  </Routes>
+                    <Routes>
+                      <Route path="/" element={<IndexPage />} />
+                      <Route path="/movies" element={<MoviesPage />} />
+                      <Route path="/series" element={<SeriesPage />} />
+                      <Route path="/animes" element={<AnimesPage />} />
+                      <Route path="/doramas" element={<DoramasPage />} />
+                      <Route path="/login" element={<LoginPage />} />
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute>
+                            <AdminPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/profile" element={<ProfilePage />} />
+                      <Route path="/messages" element={<MessagesPage />} />
+                      <Route path="/search" element={<SearchPage />} />
+                      <Route path="/content/:id" element={<ContentPage />} />
+                      <Route path="/pelicula/:slug" element={<ContentPage />} />
+                      <Route path="/serie/:slug" element={<ContentPage />} />
+                      <Route path="/category/:type" element={<CategoryPage />} />
+                      <Route path="/watch/:id" element={<WatchPage />} />
+                      <Route path="*" element={<NotFound />} />
+                      <Route path="/__not-found" element={<NotFoundPage />} />
+                    </Routes>
                   </Suspense>
                   <Footer />
                   <FloatingButton />
                 </div>
                 <Toaster />
+                <LoadingOverlay />
               </TooltipProvider>
             </AuthProvider>
           </LicenseGate>

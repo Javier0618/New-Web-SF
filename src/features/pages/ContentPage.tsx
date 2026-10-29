@@ -1,3 +1,4 @@
+import LoadingScreen from "@/components/LoadingScreen";
 import { Link, useParams, useNavigate, useSearchParams } from "@/lib/react-router-shim";
 import { useContentDetail, useContent } from "@/hooks/useContent";
 import {
@@ -343,23 +344,10 @@ const ContentPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <>
         <Navbar />
-        <div className="pt-20 px-4 md:px-8 max-w-7xl mx-auto">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 aspect-video rounded-2xl bg-muted animate-pulse" />
-            <div className="hidden lg:block w-[380px] rounded-2xl bg-muted/60 animate-pulse" />
-          </div>
-          <div className="mt-8 flex gap-8">
-            <div className="hidden lg:block w-56 aspect-[2/3] rounded-2xl bg-muted animate-pulse" />
-            <div className="flex-1 space-y-4">
-              <div className="h-12 w-2/3 rounded-lg bg-muted animate-pulse" />
-              <div className="h-5 w-1/3 rounded bg-muted animate-pulse" />
-              <div className="h-28 w-full rounded-xl bg-muted/60 animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
+        <LoadingScreen />
+      </>
     );
   }
 
