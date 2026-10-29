@@ -105,8 +105,19 @@ const Hero = ({ content, allContent = [], heroConfig }: HeroProps) => {
         />
       </AnimatePresence>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/10" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/50 to-transparent" />
+      {/* Mezcla cinematográfica: base sólida abajo que se desvanece hacia la
+          imagen, vignette lateral para el texto y oscurecido superior para la
+          navbar. El radial añade profundidad tipo "billboard". */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/55 to-background/5" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/45 to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background/80 to-transparent" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(130% 85% at 18% 88%, transparent 42%, hsl(var(--background) / 0.55) 100%)",
+        }}
+      />
 
       <div className="relative z-10 h-full flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-12 px-4 md:px-10 pt-20 lg:pt-24 pb-6 md:pb-10">
         {/* Función destacada */}
@@ -119,8 +130,8 @@ const Hero = ({ content, allContent = [], heroConfig }: HeroProps) => {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.45 }}
             >
-              <div className="flex flex-wrap items-center gap-2 mb-4 text-sm font-semibold">
-                <span className="px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground">
+              <div className="flex flex-wrap items-center gap-2.5 mb-4 text-sm font-semibold">
+                <span className="px-2.5 py-1 rounded-md bg-primary/15 text-primary ring-1 ring-primary/30">
                   {item.media_type === "movie" ? "Película" : "Serie"}
                 </span>
                 {item.vote_average != null && item.vote_average > 0 && (
@@ -131,10 +142,7 @@ const Hero = ({ content, allContent = [], heroConfig }: HeroProps) => {
                 )}
                 {year && <span className="text-foreground/70">{year}</span>}
                 {item.genres?.slice(0, 2).map((g) => (
-                  <span
-                    key={String(g)}
-                    className="hidden sm:inline px-2.5 py-0.5 rounded-full border border-foreground/20 text-foreground/80"
-                  >
+                  <span key={String(g)} className="hidden sm:inline text-foreground/60">
                     {getGenreName(g)}
                   </span>
                 ))}
@@ -156,14 +164,14 @@ const Hero = ({ content, allContent = [], heroConfig }: HeroProps) => {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => navigate(`${contentUrl(item)}?autoplay=1`)}
-                  className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground font-bold hover:brightness-110 active:scale-[0.98] transition"
+                  className="inline-flex items-center gap-2.5 h-12 px-7 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25 hover:brightness-110 active:scale-[0.98] transition"
                 >
                   <Play className="w-5 h-5 fill-current" />
                   Ver ahora
                 </button>
                 <button
                   onClick={() => navigate(contentUrl(item))}
-                  className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-foreground/10 border border-foreground/20 font-bold backdrop-blur-md hover:bg-foreground/20 transition"
+                  className="inline-flex items-center gap-2.5 h-12 px-6 rounded-xl bg-foreground/10 border border-foreground/15 font-bold backdrop-blur-md hover:bg-foreground/20 transition"
                 >
                   <Info className="w-5 h-5" />
                   Detalles
@@ -178,13 +186,14 @@ const Hero = ({ content, allContent = [], heroConfig }: HeroProps) => {
           <>
             <ol
               ref={listRef}
-              className="hidden lg:flex flex-col w-[320px] xl:w-[360px] flex-shrink-0 max-h-full overflow-y-auto scrollbar-hide rounded-2xl bg-background/55 backdrop-blur-xl border border-border/70 p-2"
+              className="hidden lg:flex flex-col lg:ml-auto w-[320px] xl:w-[360px] flex-shrink-0 max-h-full overflow-y-auto scrollbar-hide rounded-2xl bg-background/40 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-black/40 p-2 [mask-image:linear-gradient(to_bottom,#000_90%,transparent)]"
             >
               <li
-                className="sticky -top-2 z-10 -mx-2 -mt-2 px-5 pt-4 pb-2 font-display text-lg font-bold bg-background/80 backdrop-blur-xl rounded-t-2xl"
+                className="sticky -top-2 z-10 -mx-2 -mt-2 px-5 pt-4 pb-3 font-display text-lg font-bold bg-background/70 backdrop-blur-2xl rounded-t-2xl flex items-center gap-2"
                 aria-hidden
               >
-                En cartelera
+                <span className="w-1 h-4 rounded-full bg-primary" />
+                Destacados
               </li>
               {slides.map((s, i) => {
                 const active = i === current;
@@ -194,7 +203,7 @@ const Hero = ({ content, allContent = [], heroConfig }: HeroProps) => {
                       onClick={() => setCurrent(i)}
                       aria-current={active ? "true" : undefined}
                       className={`relative w-full flex items-center gap-3 p-1.5 rounded-xl text-left overflow-hidden transition-colors ${
-                        active ? "bg-secondary" : "hover:bg-secondary/60"
+                        active ? "bg-primary/15 ring-1 ring-primary/25" : "hover:bg-secondary/60"
                       }`}
                     >
                       <img

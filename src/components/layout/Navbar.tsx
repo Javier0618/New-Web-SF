@@ -51,10 +51,10 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-background/90 backdrop-blur-xl border-b border-border/60"
-            : "bg-gradient-to-b from-background/85 to-transparent"
+            ? "bg-background/80 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/30"
+            : "bg-gradient-to-b from-background/90 via-background/40 to-transparent"
         }`}
       >
         {searchOpen && (
@@ -94,10 +94,10 @@ const Navbar = () => {
                 key={l.to}
                 to={l.to}
                 aria-current={isActive(l.to) ? "page" : undefined}
-                className={`px-3 py-1.5 rounded-full text-[15px] font-semibold transition-colors ${
+                className={`px-3.5 py-1.5 rounded-full text-[15px] font-semibold transition-all ${
                   isActive(l.to)
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground/70 hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                    : "text-foreground/65 hover:text-foreground hover:bg-white/5"
                 }`}
               >
                 {l.label}
@@ -114,7 +114,7 @@ const Navbar = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar títulos"
                 aria-label="Buscar"
-                className="w-52 lg:w-64 h-9 pl-9 pr-3 rounded-full bg-secondary/70 border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary lg:focus:w-72 transition-all"
+                className="w-52 lg:w-64 h-9 pl-9 pr-3 rounded-full bg-secondary/60 border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/25 focus:bg-secondary lg:focus:w-72 transition-all"
               />
             </form>
             <button
@@ -178,10 +178,13 @@ const Navbar = () => {
               key={to}
               to={to}
               aria-current={active ? "page" : undefined}
-              className={`flex flex-col items-center justify-center gap-1 text-[11px] font-semibold ${
+              className={`relative flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
             >
+              {active && (
+                <span className="absolute top-0 h-0.5 w-7 rounded-full bg-primary" aria-hidden />
+              )}
               <Icon className="w-5 h-5" strokeWidth={active ? 2.4 : 1.8} />
               {label}
             </Link>

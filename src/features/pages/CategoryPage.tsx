@@ -5,7 +5,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import ContentCard from "@/components/home/ContentCard";
 import { useContent } from "@/hooks/useContent";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import { getGenreName } from "@/lib/genres";
+import { canonicalGenre } from "@/lib/genres";
 import { Loader2 } from "lucide-react";
 
 const CategoryPage = () => {
@@ -28,9 +28,8 @@ const CategoryPage = () => {
   const filtered = useMemo(() => {
     if (isMediaType) return content.filter((c) => c.media_type === mediaFilter);
     if (isPlatform) return content.filter((c) => c.display_options?.platforms?.includes(type!));
-    return content.filter((c) =>
-      c.genres?.some((g) => g === type || getGenreName(g) === decodeURIComponent(type || "")),
-    );
+    const target = canonicalGenre(decodeURIComponent(type || ""));
+    return content.filter((c) => c.genres?.some((g) => canonicalGenre(g) === target));
   }, [content, type, isMediaType, isPlatform, mediaFilter]);
 
   const title = isMediaType

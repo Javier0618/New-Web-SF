@@ -33,3 +33,72 @@ const GENRE_MAP: Record<string, string> = {
 export const getGenreName = (genreIdOrName: string): string => {
   return GENRE_MAP[genreIdOrName] || genreIdOrName;
 };
+
+/**
+ * Los géneros llegan mezclados: unos como ID numérico, otros como nombre en
+ * español y otros en inglés (p. ej. "Sci-Fi & Fantasy"). Eso hace que el mismo
+ * género aparezca como varias filas distintas en la portada. `canonicalGenre`
+ * normaliza cualquier variante a un único nombre en español para agrupar y
+ * filtrar de forma consistente.
+ */
+const normalizeKey = (s: string): string =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
+
+const GENRE_SYNONYMS: Record<string, string> = {
+  accion: "Acción",
+  "action & adventure": "Acción",
+  "accion y aventura": "Acción",
+  aventura: "Acción",
+  adventure: "Acción",
+  "ciencia ficcion": "Ciencia ficción",
+  "science fiction": "Ciencia ficción",
+  "sci-fi & fantasy": "Ciencia ficción",
+  "sci-fi y fantasia": "Ciencia ficción",
+  fantasia: "Fantasía",
+  fantasy: "Fantasía",
+  suspenso: "Suspenso",
+  suspense: "Suspenso",
+  thriller: "Suspenso",
+  familia: "Familia",
+  family: "Familia",
+  kids: "Familia",
+  infantil: "Familia",
+  belica: "Bélica",
+  war: "Bélica",
+  "war & politics": "Bélica",
+  "guerra y politica": "Bélica",
+  telenovela: "Telenovela",
+  soap: "Telenovela",
+  animacion: "Animación",
+  animation: "Animación",
+  comedia: "Comedia",
+  comedy: "Comedia",
+  crimen: "Crimen",
+  crime: "Crimen",
+  drama: "Drama",
+  terror: "Terror",
+  horror: "Terror",
+  misterio: "Misterio",
+  mystery: "Misterio",
+  romance: "Romance",
+  documental: "Documental",
+  documentary: "Documental",
+  musica: "Música",
+  music: "Música",
+  western: "Western",
+  reality: "Reality",
+  historia: "Historia",
+  history: "Historia",
+  noticias: "Noticias",
+  news: "Noticias",
+  "talk show": "Talk Show",
+};
+
+export const canonicalGenre = (genreIdOrName: string): string => {
+  const name = getGenreName(String(genreIdOrName));
+  return GENRE_SYNONYMS[normalizeKey(name)] || name;
+};

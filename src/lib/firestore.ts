@@ -211,7 +211,11 @@ export const fetchWebConfig = async () => {
 };
 
 export const updateWebConfig = async (data: Record<string, any>) => {
-  return setDoc(doc(db, "web_config", "settings"), data, { merge: true });
+  // Reemplazo completo (sin merge): el panel carga el documento entero y lo
+  // edita, así que guardarlo tal cual permite que apagar opciones, vaciar mapas
+  // (p. ej. "restablecer colores") o quitar elementos se apliquen de verdad.
+  // Con merge:true Firestore nunca borraba claves dentro de mapas anidados.
+  return setDoc(doc(db, "web_config", "settings"), data);
 };
 
 // ---- Modal Sections ----

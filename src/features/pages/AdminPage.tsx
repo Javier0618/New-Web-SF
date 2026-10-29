@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/layout/Navbar";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { resolveHomeOrder, labelForSection, type HomeSectionState } from "@/lib/homeSections";
 import {
   fetchAllContent,
   updateContent,
@@ -593,6 +594,9 @@ const AdminPage = () => {
   const [totalContentCount, setTotalContentCount] = useState<number | null>(null);
   const [contentSearch, setContentSearch] = useState("");
   const [isSearchingContent, setIsSearchingContent] = useState(false);
+  // Carga progresiva: el catálogo completo solo se trae bajo demanda al buscar.
+  const [allContentLoaded, setAllContentLoaded] = useState(false);
+  const [loadingAllForSearch, setLoadingAllForSearch] = useState(false);
   const [editingOptions, setEditingOptions] = useState<Content | null>(null);
 
   // Users
@@ -646,6 +650,46 @@ const AdminPage = () => {
     }
   };
 
+  // Trae el resto del catálogo de una sola vez, pero SOLO cuando el admin
+  // busca, para que la búsqueda cubra todos los títulos sin leerlos al entrar.
+  const loadAllContent = async () => {
+    if (allContentLoaded || loadingAllForSearch) return;
+    setLoadingAllForSearch(true);
+    try {
+      let cursor: any = lastContentDoc;
+      const PAGE = 200;
+      while (cursor) {
+        const { content: more, lastVisible: next } = await fetchContentPaginated(PAGE, cursor);
+        if (more.length === 0) break;
+        setContentList(prev => {
+          const existing = new Set(prev.map(c => c.docId));
+          return [...prev, ...more.filter(c => !existing.has(c.docId))];
+        });
+        setImportedIds(prev => {
+          const n = new Set(prev);
+          more.forEach(c => n.add(c.id));
+          return n;
+        });
+        cursor = more.length < PAGE ? null : next;
+      }
+      setHasMoreContent(false);
+      setLastContentDoc(null);
+      setAllContentLoaded(true);
+    } catch (e) {
+      console.error("[admin] Error cargando el catálogo para la búsqueda:", e);
+    } finally {
+      setLoadingAllForSearch(false);
+    }
+  };
+
+  // Al escribir una búsqueda, si aún no está todo cargado, trae el resto.
+  useEffect(() => {
+    if (contentSearch.trim() && !allContentLoaded && !loadingAllForSearch) {
+      loadAllContent();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentSearch, allContentLoaded]);
+
   const loadMoreUsers = async () => {
     if (!hasMoreUsers || loading) return;
     try {
@@ -680,46 +724,17 @@ const AdminPage = () => {
     try {
       if (t === "tmdb" || t === "content") {
         if (contentList.length === 0) {
-          // Primera página rápida para mostrar contenido enseguida
-          const PAGE = 100;
+          // Solo la primera página: el resto se carga al deslizar (scroll) o,
+          // si el admin busca, bajo demanda con loadAllContent(). Así abrir la
+          // pestaña ya no lee miles de documentos de golpe.
+          const PAGE = 60;
           const { content, lastVisible } = await fetchContentPaginated(PAGE);
           setContentList(content);
           setLastContentDoc(lastVisible);
           setImportedIds(new Set(content.map(item => item.id)));
           const stillMore = content.length === PAGE;
           setHasMoreContent(stillMore);
-
-          // En segundo plano, traer TODO el resto en bucle (sin bloquear la UI)
-          if (stillMore && lastVisible) {
-            (async () => {
-              let cursor: any = lastVisible;
-              try {
-                while (cursor) {
-                  const { content: more, lastVisible: next } = await fetchContentPaginated(PAGE, cursor);
-                  if (more.length === 0) break;
-                  setContentList(prev => {
-                    const existing = new Set(prev.map(c => c.docId));
-                    return [...prev, ...more.filter(c => !existing.has(c.docId))];
-                  });
-                  setImportedIds(prev => {
-                    const next2 = new Set(prev);
-                    more.forEach(c => next2.add(c.id));
-                    return next2;
-                  });
-                  if (more.length < PAGE || !next) {
-                    cursor = null;
-                    setHasMoreContent(false);
-                    setLastContentDoc(null);
-                  } else {
-                    cursor = next;
-                    setLastContentDoc(next);
-                  }
-                }
-              } catch (err) {
-                console.error("[admin] Error cargando resto del contenido:", err);
-              }
-            })();
-          }
+          setAllContentLoaded(!stillMore);
         }
       }
       if (t === "users") {
@@ -736,8 +751,9 @@ const AdminPage = () => {
         if (users.length === 0) setUsers(allUsers);
       }
       if (t === "sections") {
-        const s = await fetchHomeSections();
+        const [s, cfg] = await Promise.all([fetchHomeSections(), fetchWebConfig()]);
         setHomeSections(s);
+        if (cfg) setConfig(cfg);
       }
       if (t === "analytics") {
         const cl = await fetchPosterClicks();
@@ -873,10 +889,33 @@ const AdminPage = () => {
 
   // ── Settings ──
   const handleSaveConfig = async () => {
-    const { _top10SearchResults, ...configToSave } = config;
-    await updateWebConfig(configToSave);
-    queryClient.invalidateQueries({ queryKey: ["web-config"] });
-    toast({ title: "Guardado", description: "Configuración guardada" });
+    // Quitamos cualquier campo temporal de UI (prefijo "_") antes de guardar,
+    // para que no se persista basura y el documento refleje exactamente la
+    // configuración que se ve en el panel.
+    const configToSave = Object.fromEntries(
+      Object.entries(config).filter(([key]) => !key.startsWith("_")),
+    );
+    // Al ser reemplazo completo, nunca guardamos un objeto vacío: evita borrar
+    // toda la configuración si aún no terminó de cargarse.
+    if (Object.keys(configToSave).length === 0) {
+      toast({
+        title: "Aún no se puede guardar",
+        description: "La configuración todavía no terminó de cargar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      await updateWebConfig(configToSave);
+      queryClient.invalidateQueries({ queryKey: ["web-config"] });
+      toast({ title: "Guardado", description: "Configuración guardada" });
+    } catch (e: any) {
+      toast({
+        title: "Error al guardar",
+        description: e?.message || "No se pudo guardar la configuración",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -926,9 +965,18 @@ const AdminPage = () => {
 
       <div className="pt-20 px-4 md:px-8 pb-16 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <Shield className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold">Panel de Administración</h1>
+        <div className="flex items-center gap-3.5 mb-6">
+          <div className="w-11 h-11 rounded-xl bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center flex-shrink-0">
+            <Shield className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight leading-none">
+              Panel de Administración
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1.5">
+              Gestiona tu catálogo, usuarios y la configuración del sitio.
+            </p>
+          </div>
         </div>
 
         {/* Quick stats */}
@@ -939,11 +987,13 @@ const AdminPage = () => {
             { label: "Mensajes", value: messages.length, icon: <MessageSquare className="w-5 h-5" /> },
             { label: "Clicks totales", value: clicks.reduce((a: number, c: any) => a + (c.clicks || c.clickCount || 0), 0), icon: <BarChart3 className="w-5 h-5" /> },
           ].map(s => (
-            <div key={s.label} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">{s.icon}</div>
-              <div>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-                <p className="text-xl font-bold">{s.value}</p>
+            <div key={s.label} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 transition-colors hover:border-primary/40">
+              <div className="p-2.5 bg-primary/10 ring-1 ring-primary/20 rounded-lg text-primary flex-shrink-0">{s.icon}</div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground truncate">{s.label}</p>
+                <p className="font-display text-2xl font-extrabold leading-tight tracking-tight">
+                  {typeof s.value === "number" ? s.value.toLocaleString("es") : s.value}
+                </p>
               </div>
             </div>
           ))}
@@ -955,8 +1005,10 @@ const AdminPage = () => {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
-                tab === t.id ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-accent"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
+                tab === t.id
+                  ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                  : "bg-secondary/60 text-secondary-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
               {t.icon} {t.label}
@@ -1080,12 +1132,21 @@ const AdminPage = () => {
                       className={inputCls + " pl-9"}
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    {contentSearch
-                      ? `${filteredContent.length} resultados`
-                      : totalContentCount !== null
-                        ? `${contentList.length} de ${totalContentCount} títulos`
-                        : `${contentList.length} títulos`}
+                  <span className="text-sm text-muted-foreground whitespace-nowrap flex items-center gap-2">
+                    {contentSearch ? (
+                      loadingAllForSearch ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                          Buscando en todo el catálogo…
+                        </>
+                      ) : (
+                        `${filteredContent.length} resultados`
+                      )
+                    ) : totalContentCount !== null ? (
+                      `${contentList.length} de ${totalContentCount} títulos`
+                    ) : (
+                      `${contentList.length} títulos`
+                    )}
                   </span>
                   <button
                     onClick={handleRebuildIndex}
@@ -1209,30 +1270,35 @@ const AdminPage = () => {
 
                 <div className="space-y-2">
                   {displayedUsers.map(u => (
-                    <div key={u.id} className="bg-card border border-border rounded-lg p-4">
+                    <div key={u.id} className="bg-card border border-border rounded-xl p-4 transition-colors hover:border-primary/30">
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm">{u.name || "Sin nombre"}</p>
-                          <p className="text-xs text-muted-foreground">{u.email}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            {(() => {
-                              const ls = u.lastSeen?.toDate?.();
-                              const isOnline = ls && (Date.now() - ls.getTime()) < 5 * 60 * 1000;
-                              return (
-                                <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${isOnline ? "bg-green-500/10 text-green-500" : "bg-muted text-muted-foreground"}`}>
-                                  <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground/50"}`} />
-                                  {isOnline ? "En línea" : ls ? `Visto ${ls.toLocaleDateString("es")} ${ls.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}` : "Sin actividad"}
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-full bg-primary/15 ring-1 ring-primary/25 text-primary flex items-center justify-center font-display font-bold text-base flex-shrink-0 uppercase">
+                            {(u.name || u.email || "?").charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">{u.name || "Sin nombre"}</p>
+                            <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                              {(() => {
+                                const ls = u.lastSeen?.toDate?.();
+                                const isOnline = ls && (Date.now() - ls.getTime()) < 5 * 60 * 1000;
+                                return (
+                                  <span className={`text-xs px-1.5 py-0.5 rounded flex items-center gap-1 ${isOnline ? "bg-green-500/10 text-green-500" : "bg-muted text-muted-foreground"}`}>
+                                    <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-muted-foreground/50"}`} />
+                                    {isOnline ? "En línea" : ls ? `Visto ${ls.toLocaleDateString("es")} ${ls.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}` : "Sin actividad"}
+                                  </span>
+                                );
+                              })()}
+                              {u.registeredAt && (
+                                <span className="text-xs text-muted-foreground">
+                                  Registro: {u.registeredAt?.toDate?.()?.toLocaleDateString("es") || "N/A"}
                                 </span>
-                              );
-                            })()}
-                            {u.registeredAt && (
-                              <span className="text-xs text-muted-foreground">
-                                Registro: {u.registeredAt?.toDate?.()?.toLocaleDateString("es") || "N/A"}
-                              </span>
-                            )}
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-shrink-0">
                           <button
                             onClick={() => setMsgToUser(msgToUser === u.id ? null : u.id)}
                             className="p-2 hover:bg-accent rounded-md transition-colors text-muted-foreground hover:text-foreground"
@@ -1340,60 +1406,147 @@ const AdminPage = () => {
             )}
 
             {/* ══ HOME SECTIONS TAB ════════════════════════════════════════════ */}
-            {tab === "sections" && (
+            {tab === "sections" && (() => {
+              const order = resolveHomeOrder(config.homeOrder as HomeSectionState[] | undefined);
+              const commit = (next: HomeSectionState[]) =>
+                setConfig(prev => ({ ...prev, homeOrder: next }));
+              const move = (idx: number, dir: number) => {
+                const j = idx + dir;
+                if (j < 0 || j >= order.length) return;
+                const next = [...order];
+                [next[idx], next[j]] = [next[j], next[idx]];
+                commit(next);
+              };
+              const toggle = (idx: number) =>
+                commit(order.map((s, i) => (i === idx ? { ...s, enabled: !s.enabled } : s)));
+              return (
               <div>
-                <p className="text-sm text-muted-foreground mb-4">Secciones configuradas en Firestore (colección home_sections).</p>
-                <div className="space-y-2">
-                  {homeSections
-                    .sort((a, b) => (a.order || 0) - (b.order || 0))
-                    .map(s => (
-                      <div key={s.id} className="bg-card border border-border rounded-lg p-4 flex items-center gap-4">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{s.title}</p>
-                          <p className="text-xs text-muted-foreground">Tipo: {s.type} · Orden: {s.order ?? "—"}</p>
-                        </div>
-                      </div>
-                    ))}
-                  {homeSections.length === 0 && (
-                    <div className="text-center py-16 text-muted-foreground">
-                      <Home className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                      <p>No hay secciones configuradas</p>
-                    </div>
-                  )}
+                <div className="flex items-end justify-between gap-4 mb-5 flex-wrap">
+                  <div>
+                    <h2 className="font-display text-xl font-bold tracking-tight flex items-center gap-2">
+                      <Home className="w-5 h-5 text-primary" /> Secciones de la portada
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Activa, desactiva y reordena las filas de tu página de inicio. Los cambios se aplican al guardar.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSaveConfig}
+                    className="px-5 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" /> Guardar orden
+                  </button>
                 </div>
-              </div>
-            )}
-
-            {/* ══ ANALYTICS TAB ════════════════════════════════════════════════ */}
-            {tab === "analytics" && (
-              <div>
-                <h2 className="text-lg font-bold mb-4">Top Contenido por Clicks</h2>
                 <div className="space-y-2">
-                  {clicks.map((c: any, i) => (
-                    <div key={c.id} className="bg-card rounded-lg p-3 border border-border flex items-center gap-4">
-                      <span className="text-2xl font-black text-primary/40 w-8 text-center">{i + 1}</span>
-                      {c.posterPath && (
-                        <img src={`${TMDB_IMG_BASE}/w92${c.posterPath}`} alt={c.title} className="w-10 h-14 object-cover rounded flex-shrink-0" />
-                      )}
+                  {order.map((s, i) => (
+                    <div
+                      key={s.id}
+                      className={`bg-card border rounded-xl p-3 flex items-center gap-3 transition-colors ${s.enabled ? "border-border" : "border-border/50 opacity-70"}`}
+                    >
+                      <span className="font-display text-lg font-extrabold text-primary/50 w-6 text-center flex-shrink-0">
+                        {i + 1}
+                      </span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{c.title || c.id}</p>
-                        <p className="text-xs text-muted-foreground">{c.mediaType === "movie" ? "Película" : "Serie"}</p>
+                        <p className={`font-semibold text-sm ${s.enabled ? "" : "line-through text-muted-foreground"}`}>
+                          {labelForSection(s.id)}
+                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-primary">{c.clicks || c.clickCount || 0}</p>
-                        <p className="text-xs text-muted-foreground">clicks</p>
+                      <div
+                        onClick={() => toggle(i)}
+                        role="switch"
+                        aria-checked={s.enabled}
+                        className={`relative w-11 h-6 rounded-full cursor-pointer transition-colors flex-shrink-0 ${s.enabled ? "bg-primary" : "bg-secondary"}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${s.enabled ? "translate-x-6" : "translate-x-1"}`} />
+                      </div>
+                      <div className="flex flex-col flex-shrink-0">
+                        <button
+                          onClick={() => move(i, -1)}
+                          disabled={i === 0}
+                          aria-label="Subir"
+                          className="p-1 rounded hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed text-muted-foreground hover:text-foreground"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => move(i, 1)}
+                          disabled={i === order.length - 1}
+                          aria-label="Bajar"
+                          className="p-1 rounded hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed text-muted-foreground hover:text-foreground"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+              );
+            })()}
+
+            {/* ══ ANALYTICS TAB ════════════════════════════════════════════════ */}
+            {tab === "analytics" && (() => {
+              const getCount = (c: any) => c.clicks || c.clickCount || 0;
+              const maxClicks = Math.max(1, ...clicks.map(getCount));
+              const totalClicks = clicks.reduce((a: number, c: any) => a + getCount(c), 0);
+              return (
+              <div>
+                {/* Encabezado + resumen */}
+                <div className="flex items-end justify-between gap-4 mb-5 flex-wrap">
+                  <div>
+                    <h2 className="font-display text-xl font-bold tracking-tight flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-primary" /> Top contenido por clics
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Los títulos más abiertos por tus visitantes.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="bg-card border border-border rounded-xl px-4 py-2.5 text-center">
+                      <p className="text-xs text-muted-foreground">Clics totales</p>
+                      <p className="font-display text-xl font-extrabold">{totalClicks.toLocaleString("es")}</p>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl px-4 py-2.5 text-center">
+                      <p className="text-xs text-muted-foreground">Títulos</p>
+                      <p className="font-display text-xl font-extrabold">{clicks.length.toLocaleString("es")}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {clicks.map((c: any, i) => {
+                    const count = getCount(c);
+                    const pct = Math.round((count / maxClicks) * 100);
+                    return (
+                      <div key={c.id} className="bg-card rounded-xl p-3 border border-border flex items-center gap-4 transition-colors hover:border-primary/30">
+                        <span className="font-display text-xl font-extrabold text-primary/50 w-7 text-center flex-shrink-0">{i + 1}</span>
+                        {c.posterPath && (
+                          <img src={`${TMDB_IMG_BASE}/w92${c.posterPath}`} alt={c.title} className="w-10 h-14 object-cover rounded flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{c.title || c.id}</p>
+                          <p className="text-xs text-muted-foreground mb-1.5">{c.mediaType === "movie" ? "Película" : "Serie"}</p>
+                          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-display text-xl font-extrabold text-primary">{count.toLocaleString("es")}</p>
+                          <p className="text-xs text-muted-foreground">clics</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                   {clicks.length === 0 && (
-                    <div className="text-center py-16 text-muted-foreground">
+                    <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-xl bg-card">
                       <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                      <p>Sin datos de clicks aún</p>
+                      <p>Sin datos de clics aún</p>
                     </div>
                   )}
                 </div>
               </div>
-            )}
+              );
+            })()}
 
             {/* ══ SETTINGS TAB ═════════════════════════════════════════════════ */}
             {tab === "settings" && (
@@ -1402,7 +1555,7 @@ const AdminPage = () => {
                   <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Settings className="w-5 h-5" /> Configuración Web</h2>
 
                   {/* Sub-tabs */}
-                  <div className="flex flex-wrap gap-2 border-b border-border mb-6 -mt-2">
+                  <div className="flex flex-wrap gap-2 mb-6">
                     {[
                       { id: "general" as const, label: "General", icon: <Settings className="w-4 h-4" /> },
                       { id: "inicio" as const, label: "Inicio", icon: <Home className="w-4 h-4" /> },
@@ -1412,10 +1565,10 @@ const AdminPage = () => {
                       <button
                         key={st.id}
                         onClick={() => setSettingsSubTab(st.id)}
-                        className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 -mb-px border-b-2 transition-colors ${
+                        className={`px-3.5 py-2 text-sm font-semibold rounded-lg flex items-center gap-1.5 transition-all ${
                           settingsSubTab === st.id
-                            ? "border-primary text-primary"
-                            : "border-transparent text-muted-foreground hover:text-foreground"
+                            ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                            : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
                         }`}
                       >
                         {st.icon} {st.label}
@@ -2048,9 +2201,14 @@ const AdminPage = () => {
                     </div>
                   )}
 
-                  <button onClick={handleSaveConfig} className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm font-semibold hover:bg-primary/90 flex items-center gap-2">
-                    <Save className="w-4 h-4" /> Guardar Configuración
-                  </button>
+                  <div className="mt-8 flex justify-end sticky bottom-4 z-10">
+                    <button
+                      onClick={handleSaveConfig}
+                      className="px-7 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-lg shadow-primary/30 ring-4 ring-background hover:brightness-110 active:scale-[0.98] transition flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" /> Guardar Configuración
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

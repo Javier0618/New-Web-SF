@@ -23,6 +23,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  /** true cuando ya se resolvió si el usuario actual es admin. Evita que una
+   *  ruta protegida redirija antes de que termine la comprobación. */
+  adminChecked: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -34,7 +37,12 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Guardamos a qué uid corresponde el resultado para no usar un valor obsoleto
+  // mientras cambia el usuario (evita una redirección en el instante intermedio).
+  const [adminInfo, setAdminInfo] = useState<{ uid: string | null; value: boolean }>({
+    uid: null,
+    value: false,
+  });
 
   // Track auth state
   useEffect(() => {
@@ -55,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let cancelled = false;
     if (!user || !db) {
-      setIsAdmin(false);
+      setAdminInfo({ uid: null, value: false });
       return;
     }
     // El resultado se guarda por sesión para no repetir la escritura de prueba
@@ -68,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       /* ignore */
     }
     if (cached !== null) {
-      setIsAdmin(cached === "1");
+      setAdminInfo({ uid: user.uid, value: cached === "1" });
       return;
     }
     (async () => {
@@ -84,12 +92,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch {
         /* ignore */
       }
-      if (!cancelled) setIsAdmin(result);
+      if (!cancelled) setAdminInfo({ uid: user.uid, value: result });
     })();
     return () => {
       cancelled = true;
     };
   }, [user]);
+
+  // Solo es admin si el resultado corresponde al usuario actual; `adminChecked`
+  // es false mientras la comprobación del usuario en curso no ha terminado.
+  const isAdmin = !!user && adminInfo.uid === user.uid && adminInfo.value;
+  const adminChecked = !user || adminInfo.uid === user.uid;
 
   // Track online presence
   useEffect(() => {
@@ -148,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAdmin, login, register, logout, resetPassword }}
+      value={{ user, loading, isAdmin, adminChecked, login, register, logout, resetPassword }}
     >
       {children}
     </AuthContext.Provider>

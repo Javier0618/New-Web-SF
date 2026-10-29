@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from "@/lib/react-router-shim";
+import { Link, useParams, useNavigate, useSearchParams } from "@/lib/react-router-shim";
 import { useContentDetail, useContent } from "@/hooks/useContent";
 import {
   getWatchEntry,
@@ -43,7 +43,7 @@ import { extractDocId } from "@/lib/slug";
 import { useAuth } from "@/contexts/AuthContext";
 import { addToMyList, removeFromMyList, fetchMyList } from "@/lib/firestore";
 import { toast } from "@/hooks/use-toast";
-import { getGenreName } from "@/lib/genres";
+import { canonicalGenre } from "@/lib/genres";
 import AdBanner from "@/components/ads/AdBanner";
 import TitleLogo from "@/components/content/TitleLogo";
 import type { Episode } from "@/types/content";
@@ -755,13 +755,14 @@ const ContentPage = () => {
 
             {content.genres?.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {content.genres.map((g) => (
-                  <span
-                    key={g}
-                    className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-white/5 ring-1 ring-white/10 text-white/80 hover:ring-primary/50 hover:text-white transition"
+                {Array.from(new Set(content.genres.map(canonicalGenre))).map((name) => (
+                  <Link
+                    key={name}
+                    to={`/category/${encodeURIComponent(name)}`}
+                    className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-white/5 ring-1 ring-white/10 text-white/80 hover:ring-primary/50 hover:text-primary transition"
                   >
-                    {getGenreName(g)}
-                  </span>
+                    {name}
+                  </Link>
                 ))}
               </div>
             )}
