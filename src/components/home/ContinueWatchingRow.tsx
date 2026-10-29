@@ -77,7 +77,7 @@ const ContinueWatchingRow = ({ content }: Props) => {
               >
                 <Link
                   to={`${contentUrl(c)}?autoplay=1`}
-                  className="block relative aspect-video rounded-xl overflow-hidden border border-border/60 bg-muted transition-[border-color,transform] duration-200 group-hover/cw:border-primary group-hover/cw:-translate-y-1"
+                  className="block relative aspect-video rounded-xl overflow-hidden border border-border/60 bg-muted transition-[border-color,transform] duration-500 ease-out group-hover/cw:border-primary group-hover/cw:-translate-y-0.5"
                 >
                   <img
                     src={img}

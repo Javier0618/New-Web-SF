@@ -78,7 +78,7 @@ const PlatformFilter = ({ content, visiblePlatforms }: PlatformFilterProps) => {
             aria-label={platform.label}
             className="group flex items-center justify-center h-14 px-5 md:px-8 rounded-xl bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:border-primary transition-colors flex-shrink-0"
           >
-            <span className="opacity-80 group-hover:opacity-100 transition-opacity duration-300 scale-100 group-hover:scale-110">
+            <span className="opacity-80 group-hover:opacity-100 transition-[opacity,transform] duration-500 ease-out scale-100 group-hover:scale-[1.04]">
               {platformImages?.[platform.id] ? (
                 <img
                   src={platformImages[platform.id]}

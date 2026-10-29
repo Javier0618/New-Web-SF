@@ -169,7 +169,7 @@ const ProfilePage = () => {
                       <img
                         src={getImageUrl(item.poster_path)}
                         alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
                         loading="lazy"
                       />
                     </div>

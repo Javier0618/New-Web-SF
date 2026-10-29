@@ -16,11 +16,7 @@ import ContentCarousel from "./ContentCarousel";
 type Matcher = (c: Content) => boolean;
 
 /** Normaliza un texto: minúsculas y sin acentos, para comparar géneros ES/EN. */
-const norm = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 /** ¿Alguno de los géneros del título cae en estas palabras clave? */
 const byGenre =
@@ -62,7 +58,16 @@ const MOODS: Mood[] = [
     id: "suspenso",
     label: "Suspenso",
     Icon: Ghost,
-    match: byGenre("suspenso", "thriller", "misterio", "mystery", "crimen", "crime", "terror", "horror"),
+    match: byGenre(
+      "suspenso",
+      "thriller",
+      "misterio",
+      "mystery",
+      "crimen",
+      "crime",
+      "terror",
+      "horror",
+    ),
   },
   {
     id: "scifi",
@@ -84,6 +89,10 @@ interface IntentBarProps {
   content: Content[];
 }
 
+/** Mañana (5-12 h): "ahora"; tarde (12-19 h): "esta tarde"; resto: "esta noche". */
+const momentoDelDia = (hour = new Date().getHours()) =>
+  hour >= 5 && hour < 12 ? "ahora" : hour >= 12 && hour < 19 ? "esta tarde" : "esta noche";
+
 const IntentBar = ({ content }: IntentBarProps) => {
   const [active, setActive] = useState<string | null>(null);
 
@@ -97,10 +106,10 @@ const IntentBar = ({ content }: IntentBarProps) => {
   const toggle = (id: string) => setActive((prev) => (prev === id ? null : id));
 
   return (
-    <section aria-label="¿Qué te apetece ver?" className="px-4 md:px-10 pt-6 pb-2">
+    <section aria-label="¿Qué te gustaría ver?" className="px-4 md:px-10 pt-6 pb-2">
       <div className="flex items-baseline gap-3 mb-4">
         <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight">
-          ¿Qué te apetece esta noche?
+          ¿Qué te gustaría ver {momentoDelDia()}?
         </h2>
         <AnimatePresence>
           {active && (

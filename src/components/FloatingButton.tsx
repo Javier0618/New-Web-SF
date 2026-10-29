@@ -63,11 +63,11 @@ const SingleButton = ({ fb, index }: { fb: FloatingItem; index: number }) => {
       href={fb.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed left-3 md:left-6 z-[60] flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 group"
+      className="fixed left-3 md:left-6 z-[60] flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full shadow-lg transition-transform duration-300 ease-out hover:scale-105 active:scale-95"
       style={{ backgroundColor: bgColor, bottom: `calc(${bottom}rem + var(--sf-bottom-nav))` }}
       title={fb.tooltip || ""}
     >
-      <Icon className="w-6 h-6 md:w-8 md:h-8 text-white group-hover:animate-pulse" />
+      <Icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
     </a>
   );
 };

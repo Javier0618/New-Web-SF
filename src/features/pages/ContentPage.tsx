@@ -100,7 +100,7 @@ const EpisodeItem = ({
           src={thumb}
           alt={ep.name}
           loading="lazy"
-          className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
+          className={`w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] ${
             ep.still_path ? "" : "opacity-60"
           }`}
         />
@@ -627,7 +627,7 @@ const ContentPage = () => {
                     {resumeTarget && (
                       <button
                         onClick={startMain}
-                        className="relative overflow-hidden flex items-center gap-2.5 pl-5 pr-6 py-3 md:py-3.5 rounded-full bg-primary text-primary-foreground font-extrabold text-sm md:text-base shadow-2xl hover:scale-105 active:scale-95 transition-transform"
+                        className="relative overflow-hidden flex items-center gap-2.5 pl-5 pr-6 py-3 md:py-3.5 rounded-full bg-primary text-primary-foreground font-extrabold text-sm md:text-base shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-transform duration-300 ease-out"
                       >
                         <Play className="w-5 h-5 fill-current" />
                         {ctaLabel}
@@ -806,7 +806,7 @@ const ContentPage = () => {
                             src={getImageUrl(person.profile_path, "w200")}
                             alt={person.name}
                             loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500 ease-out"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-lg font-bold text-white/40">

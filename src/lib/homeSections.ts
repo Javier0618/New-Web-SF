@@ -13,7 +13,7 @@ export interface HomeSectionDef {
 }
 
 export const HOME_SECTIONS: HomeSectionDef[] = [
-  { id: "intent", label: "¿Qué te apetece? (barra de intención)" },
+  { id: "intent", label: "¿Qué te gustaría ver? (barra de intención)" },
   { id: "platforms", label: "Filtro de plataformas" },
   { id: "continue", label: "Seguir viendo" },
   { id: "enEstreno", label: "En Estreno / Emisión" },

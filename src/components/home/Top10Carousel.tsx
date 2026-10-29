@@ -56,7 +56,7 @@ const Top10Carousel = ({ title = "Lo más visto hoy", items }: Top10CarouselProp
                 className="group/top block w-[138px] md:w-[180px] rounded-xl focus-visible:outline-offset-4"
                 aria-label={`Puesto ${i + 1}: ${item.title}`}
               >
-                <div className="flex rounded-xl overflow-hidden bg-card ring-1 ring-white/5 transition-all duration-300 group-hover/top:-translate-y-1.5 group-hover/top:ring-2 group-hover/top:ring-primary/60 group-hover/top:shadow-xl group-hover/top:shadow-black/50">
+                <div className="flex rounded-xl overflow-hidden bg-card ring-1 ring-white/5 transition-[transform,box-shadow] duration-500 ease-out group-hover/top:-translate-y-0.5 group-hover/top:ring-2 group-hover/top:ring-primary/60 group-hover/top:shadow-xl group-hover/top:shadow-black/50">
                   {/* Talón del boleto con el número */}
                   <span
                     aria-hidden
@@ -78,7 +78,7 @@ const Top10Carousel = ({ title = "Lo más visto hoy", items }: Top10CarouselProp
                       src={getImageUrl(item.poster_path)}
                       alt=""
                       loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover/top:scale-[1.06]"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/top:scale-[1.03]"
                     />
                     {rating > 0 && (
                       <span className="absolute top-1.5 right-1.5 inline-flex items-center gap-0.5 text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-background/80 backdrop-blur-sm text-primary">
