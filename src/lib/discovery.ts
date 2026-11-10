@@ -51,7 +51,22 @@ export function dailySelection(content: Content[], offset = 0) {
   return [...content].sort((a, b) => hash(a) - hash(b));
 }
 
-export function editorialSelection(content: Content[], moodId = "mystery", ids: string[] = []) {
+export function selectionForSlot(content: Content[], slot: string) {
+  let seed = 2166136261;
+  for (const letter of slot) seed = Math.imul(seed ^ letter.charCodeAt(0), 16777619);
+  const hash = (id: number) => {
+    let value = Math.imul(id ^ seed, 0x45d9f3b);
+    value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+    return (value ^ (value >>> 16)) >>> 0;
+  };
+  return [...content].sort((a, b) => hash(a.id) - hash(b.id));
+}
+export function editorialSelection(
+  content: Content[],
+  moodId = "mystery",
+  ids: string[] = [],
+  slot?: string,
+) {
   const mood = moods.find((m) => m.id === moodId) || moods[0];
   const manual = ids
     .map((id) => content.find((c) => c.docId === id || String(c.id) === id))
@@ -63,7 +78,9 @@ export function editorialSelection(content: Content[], moodId = "mystery", ids: 
     mood,
     items: [
       ...manual,
-      ...dailySelection(pool).filter((c) => !seen.has(`${c.media_type}:${c.id}`)),
+      ...(slot ? selectionForSlot(pool, slot) : dailySelection(pool)).filter(
+        (c) => !seen.has(`${c.media_type}:${c.id}`),
+      ),
     ].slice(0, 5),
   };
 }
@@ -74,7 +91,7 @@ export function contentReason(item: Content) {
     ? `${item.runtime} min`
     : item.media_type === "tv"
       ? "Una historia por episodios"
-      : "Una película para esta noche";
+      : "Una película para disfrutar";
   return [genres, duration].filter(Boolean).join(" / ");
 }
 

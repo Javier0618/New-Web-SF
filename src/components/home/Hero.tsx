@@ -18,6 +18,8 @@ import { editorialSelection, contentReason } from "@/lib/discovery";
 import { useWebConfig } from "@/hooks/useWebConfig";
 import TitleLogo, { prefetchTitleLogo } from "@/components/content/TitleLogo";
 import { canonicalGenre } from "@/lib/genres";
+import { useLocalTime } from "@/hooks/useLocalTime";
+import { resolveHeroSlot } from "@/lib/heroSchedule";
 
 interface HeroProps {
   content: Content | null;
@@ -27,20 +29,24 @@ interface HeroProps {
 
 const Hero = ({ content, allContent = [] }: HeroProps) => {
   const { data: config } = useWebConfig();
-  const editorial = config?.editorial || {};
+  const localTime = useLocalTime();
+  const editorial = useMemo(
+    () => resolveHeroSlot(config?.editorial || {}, localTime.period),
+    [config?.editorial, localTime.period],
+  );
   const selection = useMemo(
     () =>
       editorialSelection(
         allContent.length ? allContent : content ? [content] : [],
         editorial.mood,
         editorial.ids,
+        localTime.slotKey,
       ),
-    [allContent, content, editorial.mood, editorial.ids],
+    [allContent, content, editorial.mood, editorial.ids, localTime.slotKey],
   );
   const [active, setActive] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(
-    () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  useEffect(() => setActive(0), [localTime.slotKey]);
+  const [autoPlay, setAutoPlay] = useState(true);
   const [focused, setFocused] = useState(false);
   const [visible, setVisible] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(
@@ -50,7 +56,6 @@ const Hero = ({ content, allContent = [] }: HeroProps) => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       setReduceMotion(media.matches);
-      if (media.matches) setAutoPlay(false);
     };
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
@@ -66,7 +71,7 @@ const Hero = ({ content, allContent = [] }: HeroProps) => {
       8000,
     );
     return () => clearTimeout(timer);
-  }, [active, rotating, selection.items.length]);
+  }, [active, rotating, selection.items.length, localTime.slotKey]);
   useEffect(() => {
     const update = () => setVisible(!document.hidden);
     document.addEventListener("visibilitychange", update);
@@ -107,7 +112,11 @@ const Hero = ({ content, allContent = [] }: HeroProps) => {
       </div>
       <div className="sf-hero-intro">
         <span className="sf-eyebrow">
-          <Clapperboard size={13} /> DALE PLAY A TU NOCHE
+          <Clapperboard size={13} /> DALE PLAY A TU {localTime.word.toUpperCase()}{" "}
+          <span aria-hidden="true">·</span>{" "}
+          <time dateTime={localTime.iso} className="sf-hero-clock">
+            {localTime.clock}
+          </time>
         </span>
         <div className="sf-hero-heading-row">
           <h1>{editorial.headline || selection.mood.headline}</h1>
@@ -231,7 +240,14 @@ const Hero = ({ content, allContent = [] }: HeroProps) => {
         </div>
       </div>
       <a href="#elige-tu-noche" className="sf-hero-footnote">
-        <span>Una noche. Muchas posibilidades.</span>
+        <span>
+          {localTime.period === "morning"
+            ? "Una mañana"
+            : localTime.period === "afternoon"
+              ? "Una tarde"
+              : "Una noche"}
+          . Muchas posibilidades.
+        </span>
         <span>
           Encuentra la tuya <ArrowDown size={14} />
         </span>

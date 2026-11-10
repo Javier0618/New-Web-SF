@@ -845,6 +845,10 @@
     animation: none;
   }
 }
+.sf-hero-clock {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 :where(a, button, input, select, textarea):focus-visible {
   outline: 2px solid hsl(var(--primary));
   outline-offset: 4px;

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useContent } from "@/hooks/useContent";
 import { moods } from "@/lib/discovery";
-
-export interface EditorialConfig {
-  mood?: string;
-  headline?: string;
-  description?: string;
-  ids?: string[];
-}
+import {
+  heroPeriods,
+  resolveHeroSlot,
+  type EditorialConfig,
+  type EditorialSlot,
+} from "@/lib/heroSchedule";
+import type { DayPeriod } from "@/hooks/useLocalTime";
+export type { EditorialConfig } from "@/lib/heroSchedule";
 export default function EditorialSettings({
   value,
   onChange,
@@ -17,22 +18,50 @@ export default function EditorialSettings({
 }) {
   const { content } = useContent();
   const [query, setQuery] = useState("");
+  const [period, setPeriod] = useState<DayPeriod>("night");
+  const legacyNight: EditorialSlot = {
+    mood: value.mood || "",
+    headline: value.headline || "",
+    description: value.description || "",
+    ids: value.ids || [],
+  };
+  const slot = value.periods?.[period] || (period === "night" ? legacyNight : {});
+  const resolved = resolveHeroSlot(value, period);
+  const update = (patch: EditorialSlot) =>
+    onChange({ ...value, periods: { ...value.periods, [period]: { ...slot, ...patch } } });
   const input = "w-full px-3 py-2 bg-secondary rounded-md border border-border text-sm";
-  const ids = value.ids || [];
+  const ids = slot.ids || [];
   return (
     <section className="border border-border rounded-xl p-5 space-y-4">
       <div>
-        <h3 className="font-semibold">La selección de la noche</h3>
+        <h3 className="font-semibold">Cartelera según la hora del visitante</h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Personaliza la portada editorial. Los campos vacíos usan el texto del ambiente elegido.
+          Mañana: 05:00–11:59 · Tarde: 12:00–18:59 · Noche: 19:00–04:59. Los campos vacíos usan el
+          texto de cada franja.
         </p>
+      </div>
+      <div className="flex gap-2" role="group" aria-label="Franja de la cartelera">
+        {(Object.keys(heroPeriods) as DayPeriod[]).map((key) => (
+          <button
+            type="button"
+            key={key}
+            aria-pressed={period === key}
+            className={`px-4 py-2 rounded-md text-sm ${period === key ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
+            onClick={() => {
+              setPeriod(key);
+              setQuery("");
+            }}
+          >
+            {heroPeriods[key].label}
+          </button>
+        ))}
       </div>
       <label className="block text-xs space-y-2">
         <span>Ambiente</span>
         <select
           className={input}
-          value={value.mood || "mystery"}
-          onChange={(e) => onChange({ ...value, mood: e.target.value })}
+          value={resolved.mood}
+          onChange={(e) => update({ mood: e.target.value })}
         >
           {moods.map((m) => (
             <option key={m.id} value={m.id}>
@@ -45,33 +74,35 @@ export default function EditorialSettings({
         <span>Titular de portada</span>
         <input
           className={input}
-          value={value.headline || ""}
+          value={slot.headline || ""}
           maxLength={90}
-          placeholder="Esta noche, sospecha de todos."
-          onChange={(e) => onChange({ ...value, headline: e.target.value })}
+          placeholder={heroPeriods[period].headline}
+          onChange={(e) => update({ headline: e.target.value })}
         />
       </label>
       <label className="block text-xs space-y-2">
         <span>Introducción</span>
         <textarea
           className={input}
-          value={value.description || ""}
+          value={slot.description || ""}
+          placeholder={heroPeriods[period].description}
           maxLength={180}
           rows={2}
-          onChange={(e) => onChange({ ...value, description: e.target.value })}
+          onChange={(e) => update({ description: e.target.value })}
         />
       </label>
       <div className="space-y-2">
         <p className="text-xs">
-          Títulos fijados ({ids.length}/5). Sin selección, la portada se renueva cada día según el
-          ambiente.
+          Títulos fijados para {heroPeriods[period].label.toLowerCase()} ({ids.length}/5). Los
+          espacios libres se completan automáticamente según el ambiente y se renuevan en cada
+          franja de cada día.
         </p>
         {ids.map((id) => (
           <button
             type="button"
             key={id}
             className="block text-xs text-primary"
-            onClick={() => onChange({ ...value, ids: ids.filter((x) => x !== id) })}
+            onClick={() => update({ ids: ids.filter((x) => x !== id) })}
           >
             {content.find((c) => c.docId === id || String(c.id) === id)?.title || id} · Quitar
           </button>
@@ -99,7 +130,7 @@ export default function EditorialSettings({
                   className="block text-left w-full p-2 text-xs hover:bg-secondary disabled:opacity-40"
                   key={c.docId || c.id}
                   onClick={() => {
-                    onChange({ ...value, ids: [...ids, c.docId || String(c.id)] });
+                    update({ ids: [...ids, c.docId || String(c.id)] });
                     setQuery("");
                   }}
                 >
