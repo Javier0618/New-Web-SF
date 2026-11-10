@@ -6,8 +6,15 @@
  * El minuto exacto lo informa el puente del reproductor (unlimplayer) o el
  * <video> nativo; ver usePlayerBridge.
  */
-const KEY = "sf_watch_history_v1";
-const PROGRESS_KEY = "sf_watch_progress_v1";
+let KEY = "sf_watch_history_v1";
+let PROGRESS_KEY = "sf_watch_progress_v1";
+
+/** Guest and signed-in histories are kept separate on shared devices. */
+export function setWatchScope(uid: string | null) {
+  KEY = `sf_watch_history_v1${uid ? `_${uid}` : ""}`;
+  PROGRESS_KEY = `sf_watch_progress_v1${uid ? `_${uid}` : ""}`;
+  window.dispatchEvent(new Event("sf-history-updated"));
+}
 const MAX_ITEMS = 30;
 const MAX_PROGRESS = 500;
 
@@ -62,6 +69,7 @@ export const recordWatch = (entry: Omit<WatchEntry, "t">) => {
   const list = getWatchHistory().filter((e) => e.docId !== entry.docId);
   list.unshift({ ...entry, t: Date.now() });
   write(KEY, list.slice(0, MAX_ITEMS));
+  window.dispatchEvent(new Event("sf-history-updated"));
 };
 
 export const removeFromWatchHistory = (docId: string) => {
@@ -69,7 +77,29 @@ export const removeFromWatchHistory = (docId: string) => {
     KEY,
     getWatchHistory().filter((e) => e.docId !== docId),
   );
+  window.dispatchEvent(new CustomEvent("sf-history-remove", { detail: docId }));
+  window.dispatchEvent(new Event("sf-history-updated"));
 };
+
+/** Apply remote state without generating another cloud write. */
+export function applyRemoteWatch(entry: WatchEntry, position: number, duration: number) {
+  const old = getWatchEntry(entry.docId);
+  if (old && old.t >= entry.t) return;
+  write(KEY, [entry, ...getWatchHistory().filter((e) => e.docId !== entry.docId)].sort((a,b) => b.t-a.t).slice(0, MAX_ITEMS));
+  const progress = readProgress();
+  if (!progress[entry.url] || progress[entry.url].t < entry.t) {
+    progress[entry.url] = { p: position, d: duration, t: entry.t };
+    write(PROGRESS_KEY, progress);
+  }
+  window.dispatchEvent(new Event("sf-history-updated"));
+}
+
+export function applyRemoteRemoval(docId: string, timestamp: number) {
+  const entry = getWatchEntry(docId);
+  if (!entry || entry.t > timestamp) return;
+  write(KEY, getWatchHistory().filter((e) => e.docId !== docId));
+  window.dispatchEvent(new Event("sf-history-updated"));
+}
 
 // ---------- Progreso por video ----------
 

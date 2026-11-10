@@ -31,6 +31,11 @@ export interface TmdbCredits {
 }
 
 export interface TmdbSearchResult {
+  runtime?: number;
+  episode_run_time?: number[];
+  status?: string;
+  original_language?: string;
+  vote_count?: number;
   id: number;
   media_type: "movie" | "tv";
   title?: string;
@@ -77,6 +82,30 @@ export const searchTmdb = async (query: string, language = "es-MX"): Promise<Tmd
   return (data.results || []).filter(
     (item: any) => item.media_type === "movie" || item.media_type === "tv"
   ) as TmdbSearchResult[];
+};
+
+/** The search page intersects actor credits with titles in our catalogue. */
+export const searchActorCredits = async (query: string): Promise<string[]> => {
+  const response = await fetch(`${TMDB_BASE_URL}/search/person?api_key=${getTmdbKey()}&language=es-MX&query=${encodeURIComponent(query)}`);
+  if (!response.ok) throw new Error("No se pudo consultar el reparto");
+  const people = (await response.json()).results?.slice(0, 2) || [];
+  const results = await Promise.all(people.map(async (person: { id: number }) => {
+    const res = await fetch(`${TMDB_BASE_URL}/person/${person.id}/combined_credits?api_key=${getTmdbKey()}&language=es-MX`);
+    if (!res.ok) return [];
+    const credits = await res.json();
+    return (credits.cast || []).map((c: { media_type: string; id: number }) => `${c.media_type}:${c.id}`);
+  }));
+  return [...new Set(results.flat())] as string[];
+};
+
+export const fetchMovieRuntime = async (id: number): Promise<number> => {
+  const cacheKey = `sf_runtime_${id}`;
+  try { const cached = JSON.parse(localStorage.getItem(cacheKey) || "null"); if (cached && Date.now() - cached.at < 7 * 86400_000) return Number(cached.value) || 0; } catch { /* unavailable cache */ }
+  const res = await fetch(`${TMDB_BASE_URL}/movie/${id}?api_key=${getTmdbKey()}&language=es-MX`);
+  if (!res.ok) throw new Error("No se pudo consultar la duración");
+  const runtime = Number((await res.json()).runtime) || 0;
+  try { localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), value: runtime })); } catch { /* private mode */ }
+  return runtime;
 };
 
 export const fetchTmdbDetails = async (id: number, type: "movie" | "tv", language = "es-MX"): Promise<TmdbSearchResult> => {

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Play, X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Content } from "@/types/content";
@@ -21,6 +21,7 @@ interface Props {
 const ContinueWatchingRow = ({ content }: Props) => {
   const [version, setVersion] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { const update = () => setVersion((v) => v + 1); window.addEventListener("sf-history-updated", update); return () => window.removeEventListener("sf-history-updated", update); }, []);
 
   const items = useMemo(() => {
     const byDocId = new Map(content.map((c) => [c.docId, c]));
@@ -50,7 +51,7 @@ const ContinueWatchingRow = ({ content }: Props) => {
   return (
     <section className="mb-10">
       <div className="flex items-baseline px-4 md:px-10 mb-3">
-        <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight">Seguir viendo</h2>
+        <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight">Continúa tu historia</h2>
       </div>
       <div className="relative group/row">
         <button

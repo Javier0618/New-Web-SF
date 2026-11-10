@@ -48,6 +48,9 @@ import { canonicalGenre } from "@/lib/genres";
 import AdBanner from "@/components/ads/AdBanner";
 import TitleLogo from "@/components/content/TitleLogo";
 import type { Episode } from "@/types/content";
+import { contentReason } from "@/lib/discovery";
+import { queueAccountProgress, useAccountProgressReady } from "@/lib/accountProgress";
+import { trackExperience } from "@/lib/experienceAnalytics";
 
 interface FlatEpisode {
   seasonKey: string;
@@ -162,13 +165,15 @@ const ContentPage = () => {
   const docId = slug ? extractDocId(rawParam) : rawParam;
   const navigate = useNavigate();
   const { user } = useAuth();
+  const accountReady = useAccountProgressReady();
   const { content, loading } = useContentDetail(docId);
   const { content: allContent } = useContent();
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null);
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
   const [resumeAt, setResumeAt] = useState<number | null>(null);
   const [marks, setMarks] = useState<EpisodeMarks | null>(null);
-  const [, setProgressTick] = useState(0);
+  const [progressTick, setProgressTick] = useState(0);
+  useEffect(() => { const update = () => setProgressTick((t) => t + 1); window.addEventListener("sf-history-updated", update); return () => window.removeEventListener("sf-history-updated", update); }, []);
   const [inMyList, setInMyList] = useState(false);
   const [showFullOverview, setShowFullOverview] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -211,6 +216,7 @@ const ContentPage = () => {
   };
 
   const play = useCallback((url: string, seasonKey?: string, scroll = true) => {
+    trackExperience("playback_requested", { from: "content", seconds_since_arrival: Math.round(performance.now() / 1000) });
     setResumeAt(resumePosition(url));
     setPlayingUrl(url);
     if (seasonKey) setSelectedSeason(seasonKey);
@@ -250,15 +256,15 @@ const ContentPage = () => {
       pr: resumePosition(target.ep.video_url) ? pr : undefined,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, flatEpisodes, playingUrl]);
+  }, [content, flatEpisodes, playingUrl, progressTick]);
 
   // ?autoplay=1 (botón "Ver ahora" del inicio)
   useEffect(() => {
-    if (searchParams.get("autoplay") === "1" && resumeTarget && !playingUrl) {
+    if (accountReady && searchParams.get("autoplay") === "1" && resumeTarget && !playingUrl) {
       play(resumeTarget.url, resumeTarget.seasonKey, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, searchParams]);
+  }, [content, searchParams, accountReady]);
 
   // Guardar para "Seguir viendo"
   useEffect(() => {
@@ -388,7 +394,7 @@ const ContentPage = () => {
   const creators =
     (content as any).credits?.crew
       ?.filter(
-        (c: any) => c.job === "Director" || c.job === "Creator" || c.job === "Executive Producer",
+        (c: any) => isMovie ? c.job === "Director" : c.job === "Creator" || c.job === "Executive Producer",
       )
       .slice(0, 3) || [];
 
@@ -399,6 +405,7 @@ const ContentPage = () => {
     onProgress: (pos: number, dur: number) => {
       if (!playingUrl) return;
       saveProgress(playingUrl, pos, dur);
+      queueAccountProgress(content, current?.seasonNumber, current?.ep.episode_number, pos, dur);
       setProgressTick((t) => t + 1);
     },
     onNext: () => {
@@ -407,6 +414,7 @@ const ContentPage = () => {
   };
 
   const startMain = () => {
+    if (!accountReady) { toast({ title: "Recuperando tu progreso…", description: "Espera un momento mientras consultamos tu cuenta." }); return; }
     if (resumeTarget) play(resumeTarget.url, resumeTarget.seasonKey);
   };
 
@@ -739,7 +747,16 @@ const ContentPage = () => {
                 <p className="text-sm text-white/40 -mt-2 mb-3">{content.original_title}</p>
               )}
               {metaRow}
+              <div className="sf-detail-meta">
+                {content.runtime ? <span>{content.runtime} min</span> : null}
+                {content.episode_run_time?.[0] ? <span>~{content.episode_run_time[0]} min por episodio</span> : null}
+                {content.status === "Ended" && <span>Serie terminada</span>}
+                {content.status === "Returning Series" && <span>Serie en emisión</span>}
+                {content.original_language && <span>Idioma original: {new Intl.DisplayNames(["es"], { type: "language" }).of(content.original_language)}</span>}
+              </div>
             </div>
+
+            <div className="sf-detail-brief"><h2>Tu próxima sesión</h2><p>{contentReason(content)}</p>{resumeTarget?.label && <p>{resumeTarget.pr ? "Continúa" : "Siguiente historia"}: {resumeTarget.label}{ctaRemaining > 0 ? ` · Quedan ${formatMinutes(ctaRemaining)}` : ""}</p>}</div>
 
             {content.genres?.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -843,6 +860,7 @@ const ContentPage = () => {
         )}
         <AdBanner slot="content_bottom" className="mb-8" />
       </div>
+      {!playingUrl && resumeTarget && <div className="sf-mobile-play"><span>{content.title}</span><button onClick={startMain} className="sf-button-primary"><Play size={14} fill="currentColor" />{ctaLabel}</button></div>}
     </div>
   );
 };

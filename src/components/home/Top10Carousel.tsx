@@ -9,6 +9,7 @@ import { RowArrows } from "./ContentCarousel";
 
 interface Top10CarouselProps {
   title?: string;
+  subtitle?: string;
   items: Content[];
 }
 
@@ -17,7 +18,7 @@ interface Top10CarouselProps {
  * con su número en el talón perforado. La barra de calor refleja la nota
  * (`vote_average`), no métricas inventadas.
  */
-const Top10Carousel = ({ title = "Lo más visto hoy", items }: Top10CarouselProps) => {
+const Top10Carousel = ({ title = "Diez historias para descubrir", subtitle = "Una selección para ampliar tu próxima lista", items }: Top10CarouselProps) => {
   const scrollRef = useRef<HTMLOListElement>(null);
 
   const scroll = (dir: number) => {
@@ -35,7 +36,7 @@ const Top10Carousel = ({ title = "Lo más visto hoy", items }: Top10CarouselProp
           <RowArrows onScroll={scroll} />
         </div>
       </div>
-      <p className="px-4 md:px-10 text-xs text-muted-foreground mb-4">Según la valoración del público</p>
+      <p className="px-4 md:px-10 text-xs text-muted-foreground mb-4">{subtitle}</p>
 
       <ol
         ref={scrollRef}

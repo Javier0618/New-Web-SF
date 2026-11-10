@@ -1,3 +1,5 @@
+import { useState, useEffect, useRef } from "react";
+import { Plus, X } from "lucide-react";
 import { useWebConfig } from "@/hooks/useWebConfig";
 import {
   FaAndroid,
@@ -49,50 +51,23 @@ interface FloatingItem {
   tooltip?: string;
 }
 
-const SingleButton = ({ fb, index }: { fb: FloatingItem; index: number }) => {
-  const iconKey = fb.icon || "android";
-  const entry = ICON_MAP[iconKey] || ICON_MAP.android;
-  const Icon = entry.icon;
-  const bgColor = entry.color;
-
-  // Stack vertically: bottom-6, bottom-24, bottom-[10.5rem], ...
-  const bottom = 1 + index * 3.75;
-
-  return (
-    <a
-      href={fb.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="fixed left-3 md:left-6 z-[60] flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-full shadow-lg transition-transform duration-300 ease-out hover:scale-105 active:scale-95"
-      style={{ backgroundColor: bgColor, bottom: `calc(${bottom}rem + var(--sf-bottom-nav))` }}
-      title={fb.tooltip || ""}
-    >
-      <Icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
-    </a>
-  );
-};
-
 const FloatingButton = () => {
   const { data: config } = useWebConfig();
-
-  // New format: array of buttons. Fallback to legacy single object.
-  const list: FloatingItem[] =
-    Array.isArray(config?.floatingButtons) && config.floatingButtons.length > 0
-      ? config.floatingButtons
-      : config?.floatingButton
-        ? [config.floatingButton]
-        : [];
-
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", close); document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", key); };
+  }, [open]);
+  const list: FloatingItem[] = Array.isArray(config?.floatingButtons) && config.floatingButtons.length ? config.floatingButtons : config?.floatingButton ? [config.floatingButton] : [];
   const enabled = list.filter((fb) => fb?.enabled && fb?.url);
-  if (enabled.length === 0) return null;
-
-  return (
-    <>
-      {enabled.map((fb, i) => (
-        <SingleButton key={fb.id || i} fb={fb} index={i} />
-      ))}
-    </>
-  );
+  if (!enabled.length) return null;
+  return <div className="sf-utility" ref={ref}>
+    {open && <div className="sf-utility-menu" id="sf-utility-links">{enabled.map((fb,i) => {const entry=ICON_MAP[fb.icon || "android"] || ICON_MAP.link; const Icon=entry.icon; return <a key={fb.id || i} href={fb.url} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}><Icon style={{color:entry.color}} className="w-5 h-5" /><span>{fb.tooltip || (fb.icon === "android" ? "Descargar la app" : fb.icon || "Abrir enlace")}</span></a>})}</div>}
+    <button className="sf-utility-toggle" aria-label={open ? "Cerrar accesos" : "Apps y comunidad"} aria-expanded={open} aria-controls="sf-utility-links" onClick={() => setOpen(!open)}>{open ? <X size={19} /> : <Plus size={19} />}</button>
+  </div>;
 };
-
 export default FloatingButton;

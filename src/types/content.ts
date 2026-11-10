@@ -43,6 +43,12 @@ export interface Credits {
 }
 
 export interface Content {
+  runtime?: number;
+  episode_run_time?: number[];
+  status?: string;
+  original_language?: string;
+  vote_count?: number;
+  cast_names?: string[];
   id: number;
   media_type: "movie" | "tv";
   title: string;

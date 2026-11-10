@@ -1,175 +1,213 @@
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Laugh, Swords, Heart, Ghost, Rocket, Users, Sparkles, Drama, X } from "lucide-react";
+import { ArrowUpRight, RotateCw, Sparkles, Clock3, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { Content } from "@/types/content";
-import { getGenreName } from "@/lib/genres";
-import ContentCarousel from "./ContentCarousel";
+import { moods, hasGenre, dailySelection, contentReason } from "@/lib/discovery";
+import { getImageUrl } from "@/lib/image";
+import { contentUrl } from "@/lib/slug";
+import { useQuery } from "@tanstack/react-query";
+import { fetchMovieRuntime } from "@/lib/tmdb";
+import { trackExperience } from "@/lib/experienceAnalytics";
 
-/**
- * Barra de intención: en vez de obligar a cazar entre filas de pósters, el
- * visitante dice QUÉ le apetece y el catálogo responde al instante.
- *
- * Es el diferenciador de la portada. Todo el filtrado es local (sobre el
- * catálogo ya cargado), así que no añade lecturas de Firestore.
- */
-
-type Matcher = (c: Content) => boolean;
-
-/** Normaliza un texto: minúsculas y sin acentos, para comparar géneros ES/EN. */
-const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-
-/** ¿Alguno de los géneros del título cae en estas palabras clave? */
-const byGenre =
-  (...keywords: string[]): Matcher =>
-  (c) =>
-    (c.genres || []).some((g) => {
-      const name = norm(getGenreName(String(g)));
-      return keywords.some((k) => name.includes(k));
-    });
-
-/** ¿Está en una sección principal concreta (animes, doramas…)? */
-const bySection =
-  (section: string): Matcher =>
-  (c) =>
-    c.display_options?.main_sections?.includes(section) ?? false;
-
-interface Mood {
-  id: string;
-  label: string;
-  Icon: typeof Laugh;
-  match: Matcher;
-}
-
-const MOODS: Mood[] = [
-  { id: "reir", label: "Para reír", Icon: Laugh, match: byGenre("comedia", "comedy") },
-  {
-    id: "accion",
-    label: "Acción",
-    Icon: Swords,
-    match: byGenre("accion", "action", "aventura", "adventure"),
-  },
-  {
-    id: "romance",
-    label: "Romance",
-    Icon: Heart,
-    match: byGenre("romance", "romantica", "telenovela"),
-  },
-  {
-    id: "suspenso",
-    label: "Suspenso",
-    Icon: Ghost,
-    match: byGenre(
-      "suspenso",
-      "thriller",
-      "misterio",
-      "mystery",
-      "crimen",
-      "crime",
-      "terror",
-      "horror",
-    ),
-  },
-  {
-    id: "scifi",
-    label: "Ciencia ficción",
-    Icon: Rocket,
-    match: byGenre("ciencia ficcion", "sci-fi", "science", "fantasia", "fantasy"),
-  },
-  {
-    id: "familia",
-    label: "En familia",
-    Icon: Users,
-    match: byGenre("familia", "family", "infantil", "kids", "animacion", "animation"),
-  },
-  { id: "anime", label: "Anime", Icon: Sparkles, match: bySection("animes") },
-  { id: "doramas", label: "Doramas", Icon: Drama, match: bySection("doramas") },
-];
-
-interface IntentBarProps {
-  content: Content[];
-}
-
-/** Mañana (5-12 h): "ahora"; tarde (12-19 h): "esta tarde"; resto: "esta noche". */
-const momentoDelDia = (hour = new Date().getHours()) =>
-  hour >= 5 && hour < 12 ? "ahora" : hour >= 12 && hour < 19 ? "esta tarde" : "esta noche";
-
-const IntentBar = ({ content }: IntentBarProps) => {
-  const [active, setActive] = useState<string | null>(null);
-
-  const activeMood = MOODS.find((m) => m.id === active) || null;
-
+const IntentBar = ({ content }: { content: Content[] }) => {
+  const [mood, setMood] = useState("all");
+  const [time, setTime] = useState("any");
+  const [company, setCompany] = useState("solo");
+  const [round, setRound] = useState(0);
+  const [started, setStarted] = useState(false);
+  const shortCandidates = useMemo(
+    () =>
+      dailySelection(
+        content.filter(
+          (c) =>
+            c.media_type === "movie" &&
+            (!moods.find((m) => m.id === mood) ||
+              hasGenre(c, moods.find((m) => m.id === mood)!.genres)) &&
+            (company === "solo" ||
+              hasGenre(
+                c,
+                company === "family"
+                  ? ["Familia", "Animación"]
+                  : company === "couple"
+                    ? ["Romance", "Comedia", "Drama"]
+                    : ["Acción", "Comedia", "Suspenso", "Terror", "Aventura"],
+              )),
+        ),
+        27,
+      ).slice(0, 18),
+    [content, mood, company],
+  );
+  const { data: runtimeData = {}, isFetching: loadingTimes } = useQuery({
+    queryKey: ["night-runtime", shortCandidates.map((c) => c.id).join(",")],
+    enabled: time === "short" && started && shortCandidates.length > 0,
+    staleTime: 7 * 86400_000,
+    retry: false,
+    queryFn: async () => {
+      const pairs: Array<[number, number]> = [];
+      for (let i = 0; i < shortCandidates.length; i += 3)
+        pairs.push(
+          ...(await Promise.all(
+            shortCandidates
+              .slice(i, i + 3)
+              .map(
+                async (c): Promise<[number, number]> => [
+                  c.id,
+                  c.runtime || (await fetchMovieRuntime(c.id).catch(() => 0)),
+                ],
+              ),
+          )),
+        );
+      return Object.fromEntries(pairs) as Record<string, number>;
+    },
+  });
+  const pool = useMemo(
+    () =>
+      content
+        .filter((c) => {
+          const selected = moods.find((m) => m.id === mood);
+          if (selected && !hasGenre(c, selected.genres)) return false;
+          if (time === "episode" && c.media_type !== "tv") return false;
+          const runtime = c.runtime || runtimeData[String(c.id)];
+          if (time === "short" && (c.media_type !== "movie" || !runtime || runtime > 100))
+            return false;
+          if (time === "marathon" && c.media_type !== "tv") return false;
+          if (company === "family" && !hasGenre(c, ["Familia", "Animación"])) return false;
+          if (company === "couple" && !hasGenre(c, ["Romance", "Comedia", "Drama"])) return false;
+          if (
+            company === "friends" &&
+            !hasGenre(c, ["Acción", "Comedia", "Suspenso", "Terror", "Aventura"])
+          )
+            return false;
+          return true;
+        })
+        .map((c) =>
+          time === "short" ? { ...c, runtime: c.runtime || runtimeData[String(c.id)] } : c,
+        ),
+    [content, mood, time, company, runtimeData],
+  );
   const results = useMemo(() => {
-    if (!activeMood) return [];
-    return content.filter(activeMood.match).slice(0, 24);
-  }, [activeMood, content]);
-
-  const toggle = (id: string) => setActive((prev) => (prev === id ? null : id));
-
+    const sorted = dailySelection(pool, 17);
+    if (!sorted.length) return [];
+    return Array.from(
+      { length: Math.min(3, sorted.length) },
+      (_, i) => sorted[(round * 3 + i) % sorted.length],
+    );
+  }, [pool, round]);
+  const update = (fn: () => void) => {
+    fn();
+    setRound(0);
+  };
   return (
-    <section aria-label="¿Qué te gustaría ver?" className="px-4 md:px-10 pt-6 pb-2">
-      <div className="flex items-baseline gap-3 mb-4">
-        <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight">
-          ¿Qué te gustaría ver {momentoDelDia()}?
-        </h2>
-        <AnimatePresence>
-          {active && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActive(null)}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <X className="w-4 h-4" />
-              Limpiar
-            </motion.button>
+    <section
+      id="elige-tu-noche"
+      className="sf-night-section sf-section"
+      aria-labelledby="night-title"
+    >
+      <div className="sf-section-heading">
+        <div>
+          <span className="sf-eyebrow">MENOS BUSCAR. MÁS DISFRUTAR.</span>
+          <h2 id="night-title">
+            Elige tu noche<span className="sf-accent">.</span>
+          </h2>
+        </div>
+        <p>
+          Tú pones las ganas.
+          <br />
+          Nosotros, las historias.
+        </p>
+      </div>
+      <div className="sf-night-controls">
+        <label>
+          <span>
+            <Sparkles size={15} /> ¿Qué te apetece?
+          </span>
+          <select value={mood} onChange={(e) => update(() => setMood(e.target.value))}>
+            <option value="all">Estoy abierto a todo</option>
+            {moods.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>
+            <Clock3 size={15} /> ¿De cuánto tiempo dispones?
+          </span>
+          <select value={time} onChange={(e) => update(() => setTime(e.target.value))}>
+            <option value="any">Sin mirar el reloj</option>
+            <option value="episode">Me apetece un episodio</option>
+            <option value="short">Una película de hasta 100 min</option>
+            <option value="marathon">Hoy toca maratón</option>
+          </select>
+        </label>
+        <label>
+          <span>
+            <Users size={15} /> ¿Con quién lo vas a ver?
+          </span>
+          <select value={company} onChange={(e) => update(() => setCompany(e.target.value))}>
+            <option value="solo">Un rato para mí</option>
+            <option value="couple">En pareja</option>
+            <option value="friends">Con amigos</option>
+            <option value="family">Animación y familia</option>
+          </select>
+        </label>
+        <button
+          className="sf-button-primary"
+          onClick={() => {
+            trackExperience("night_discovery", {
+              mood,
+              time,
+              company,
+              action: started ? "refresh" : "start",
+            });
+            setStarted(true);
+            if (started) setRound((r) => r + 1);
+          }}
+        >
+          {started ? <RotateCw size={16} /> : <ArrowUpRight size={18} />}
+          {started ? "Dame otras tres" : "Encuentra mi historia"}
+        </button>
+      </div>
+      {started && (
+        <div className="sf-night-results" aria-live="polite">
+          {results.map((item, i) => (
+            <Link key={item.docId || item.id} to={contentUrl(item)} className="sf-night-result">
+              <img
+                src={getImageUrl(item.backdrop_path || item.poster_path, "w500")}
+                alt=""
+                loading="lazy"
+              />
+              <div>
+                <span className="sf-eyebrow">TU OPCIÓN 0{i + 1}</span>
+                <h3>{item.title}</h3>
+                <p>{contentReason(item)}</p>
+                <span className="sf-result-link">
+                  Descubrir <ArrowUpRight size={15} />
+                </span>
+              </div>
+            </Link>
+          ))}
+          {results.length === 0 && (
+            <p className="sf-empty" role="status">
+              {loadingTimes
+                ? "Buscando historias que encajen en tu tiempo…"
+                : "No hay títulos con esta combinación. Prueba otra emoción o amplía el tiempo disponible."}
+            </p>
           )}
-        </AnimatePresence>
-      </div>
-
-      <div className="flex gap-2.5 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap pb-1">
-        {MOODS.map(({ id, label, Icon }) => {
-          const on = id === active;
-          return (
-            <button
-              key={id}
-              onClick={() => toggle(id)}
-              aria-pressed={on}
-              className={`inline-flex items-center gap-2 flex-shrink-0 h-10 pl-3.5 pr-4 rounded-full border text-sm font-semibold transition-colors ${
-                on
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary/40 text-foreground/80 border-border hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      <AnimatePresence mode="wait">
-        {activeMood && (
-          <motion.div
-            key={activeMood.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35 }}
-            className="mt-6 -mx-4 md:-mx-10"
-          >
-            {results.length > 0 ? (
-              <ContentCarousel title={`${activeMood.label} · ${results.length}`} items={results} />
-            ) : (
-              <p className="px-4 md:px-10 text-muted-foreground">
-                Aún no hay nada en «{activeMood.label}». Prueba otro estado de ánimo.
-              </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
+      {time === "short" && (
+        <p className="sf-control-note">
+          Solo mostramos películas con duración confirmada en el catálogo.
+        </p>
+      )}
+      {company === "family" && (
+        <p className="sf-control-note">
+          Selección por género. Consulta la clasificación por edades de cada título.
+        </p>
+      )}
     </section>
   );
 };
-
 export default IntentBar;

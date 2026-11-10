@@ -14,6 +14,7 @@ export interface HomeSectionDef {
 
 export const HOME_SECTIONS: HomeSectionDef[] = [
   { id: "intent", label: "¿Qué te gustaría ver? (barra de intención)" },
+  { id: "collections", label: "Colecciones editoriales" },
   { id: "platforms", label: "Filtro de plataformas" },
   { id: "continue", label: "Seguir viendo" },
   { id: "enEstreno", label: "En Estreno / Emisión" },
@@ -46,7 +47,10 @@ export function resolveHomeOrder(saved?: HomeSectionState[] | null): HomeSection
     }
   });
   HOME_SECTIONS.forEach((s) => {
-    if (!seen.has(s.id)) result.push({ id: s.id, enabled: true });
+    if (!seen.has(s.id)) {
+      if (s.id === "collections" && result.some((row) => row.id === "intent")) result.splice(result.findIndex((row) => row.id === "intent") + 1, 0, { id: s.id, enabled: true });
+      else result.push({ id: s.id, enabled: true });
+    }
   });
   return result;
 }

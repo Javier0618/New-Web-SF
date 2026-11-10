@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink, AlertTriangle } from "lucide-react";
+import { ExternalLink, AlertTriangle, RotateCw } from "lucide-react";
 import { usePlayerBridge, type PlayerBridgeOptions } from "@/hooks/usePlayerBridge";
 
 interface VideoPlayerProps {
@@ -10,15 +10,13 @@ interface VideoPlayerProps {
 }
 
 const VideoPlayer = ({ url, title, bridge }: VideoPlayerProps) => {
-  const isIframe =
-    url.includes("embed") ||
-    url.includes("youtube") ||
-    url.includes("vimeo") ||
-    url.includes("iframe");
+  const isIframe = !/\.(mp4|webm|ogg|ogv|m4v|mov|m3u8)(?:[?#]|$)/i.test(url);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [iframeFailed, setIframeFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const retry = () => { resumed.current = false; setIframeFailed(false); setAttempt((n) => n + 1); };
 
   usePlayerBridge(iframeRef, url, isIframe ? bridge : undefined);
 
@@ -41,14 +39,25 @@ const VideoPlayer = ({ url, title, bridge }: VideoPlayerProps) => {
       }
     }, 8000);
     return () => window.clearTimeout(timer);
-  }, [url, isIframe]);
+  }, [url, isIframe, attempt]);
 
   // <video> nativo: mismo comportamiento que el puente, sin necesidad de él
   const lastSaved = useRef(0);
+  const lastPosition = useRef(0);
   const resumed = useRef(false);
   useEffect(() => {
     resumed.current = false;
+    lastSaved.current = 0;
+    lastPosition.current = 0;
+    setIframeFailed(false);
   }, [url]);
+
+  const recovery = <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 text-center p-4">
+    <AlertTriangle className="w-7 h-7 text-primary" />
+    <p className="text-sm font-medium">No pudimos cargar este video.</p>
+    <p className="text-xs text-muted-foreground max-w-sm">Puedes reintentar conservando tu progreso o abrir el reproductor por separado.</p>
+    <div className="flex flex-wrap justify-center gap-2"><button onClick={retry} className="sf-button-primary"><RotateCw size={14} /> Reintentar</button><a href={url} target="_blank" rel="noopener noreferrer" className="sf-button-secondary"><ExternalLink size={14} /> Abrir reproductor</a></div>
+  </div>;
 
   const externalButton = (
     <a
@@ -69,7 +78,7 @@ const VideoPlayer = ({ url, title, bridge }: VideoPlayerProps) => {
     return (
       <div className={frameCls}>
         <iframe
-          key={url}
+          key={`${url}:${attempt}`}
           ref={iframeRef}
           src={url}
           title={title || "Video Player"}
@@ -82,19 +91,7 @@ const VideoPlayer = ({ url, title, bridge }: VideoPlayerProps) => {
           }}
           onError={() => setIframeFailed(true)}
         />
-        {iframeFailed && (
-          <div className="tv-player-fallback absolute inset-0 hidden flex-col items-center justify-center gap-3 bg-background/95 text-center p-6">
-            <AlertTriangle className="w-10 h-10 text-primary" />
-            <p className="text-foreground text-base font-medium">
-              Este reproductor no es compatible con tu dispositivo.
-            </p>
-            <p className="text-muted-foreground text-sm max-w-md">
-              Algunos Smart TV bloquean reproductores embebidos. Puedes abrirlo en un navegador
-              externo o en tu teléfono.
-            </p>
-            {externalButton}
-          </div>
-        )}
+        {iframeFailed && recovery}
       </div>
     );
   }
@@ -102,7 +99,7 @@ const VideoPlayer = ({ url, title, bridge }: VideoPlayerProps) => {
   return (
     <div className={frameCls}>
       <video
-        key={url}
+        key={`${url}:${attempt}`}
         ref={videoRef}
         src={url}
         controls
@@ -111,15 +108,18 @@ const VideoPlayer = ({ url, title, bridge }: VideoPlayerProps) => {
         className="w-full h-full"
         title={title}
         autoPlay
+        onError={() => setIframeFailed(true)}
         onLoadedMetadata={(e) => {
           const v = e.currentTarget;
-          if (!resumed.current && bridge?.resumeAt && bridge.resumeAt < v.duration - 5) {
-            v.currentTime = bridge.resumeAt;
+          const position = lastPosition.current || bridge?.resumeAt;
+          if (!resumed.current && position && position < v.duration - 5) {
+            v.currentTime = position;
           }
           resumed.current = true;
         }}
         onTimeUpdate={(e) => {
           const v = e.currentTarget;
+          lastPosition.current = v.currentTime;
           const now = Date.now();
           if (now - lastSaved.current < 5000 || !Number.isFinite(v.duration)) return;
           lastSaved.current = now;
@@ -134,6 +134,7 @@ const VideoPlayer = ({ url, title, bridge }: VideoPlayerProps) => {
       >
         Tu navegador no soporta el reproductor de video.
       </video>
+      {iframeFailed && recovery}
     </div>
   );
 };

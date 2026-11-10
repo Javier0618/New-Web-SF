@@ -1,3 +1,4 @@
+import EditorialSettings from "@/components/admin/EditorialSettings";
 import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -135,6 +136,7 @@ function ImportModal({ item, onClose, onImported, adminEmail }: ImportModalProps
         platforms: selectedPlatforms,
       };
 
+      const metadata = await fetchTmdbDetails(item.id, item.media_type).catch(() => null);
       const base: any = {
         id: item.id,
         media_type: item.media_type,
@@ -147,6 +149,7 @@ function ImportModal({ item, onClose, onImported, adminEmail }: ImportModalProps
         vote_average: item.vote_average,
         genres: item.genre_ids || [],
         display_options: displayOptions,
+        ...(metadata ? { runtime: metadata.runtime || 0, episode_run_time: metadata.episode_run_time || [], status: metadata.status || "", original_language: metadata.original_language || "", vote_count: metadata.vote_count || 0, cast_names: (metadata.credits?.cast || []).slice(0,12).map(p => p.name) } : {}),
         imported_by: adminEmail,
         imported_at: serverTimestamp(),
       };
@@ -1579,6 +1582,7 @@ const AdminPage = () => {
                   {/* ─── GENERAL ─── */}
                   {settingsSubTab === "general" && (
                     <div className="space-y-6">
+                      <EditorialSettings value={config.editorial || {}} onChange={editorial => setConfig({ ...config, editorial })} />
                       {/* Logo */}
                       <div>
                         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Image className="w-4 h-4" /> Logo del Sitio</h3>
@@ -1593,7 +1597,7 @@ const AdminPage = () => {
 
                       {/* Site name / lang / hero */}
                       <div className="border-t border-border pt-4">
-                        <h3 className="text-sm font-semibold mb-3">Datos generales y Hero</h3>
+                        <h3 className="text-sm font-semibold mb-3">Datos generales</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="text-xs text-muted-foreground">Nombre del sitio</label>
@@ -1608,14 +1612,7 @@ const AdminPage = () => {
                               <option value="pt-BR">Português (BR)</option>
                             </select>
                           </div>
-                          <div>
-                            <label className="text-xs text-muted-foreground">Posters en slider hero</label>
-                            <input type="number" value={config.heroSlider?.posters || 8} onChange={e => setConfig({ ...config, heroSlider: { ...(config.heroSlider || {}), posters: Number(e.target.value) } })} className={inputCls} min={1} max={20} />
-                          </div>
-                          <div>
-                            <label className="text-xs text-muted-foreground">Posters aleatorios en hero</label>
-                            <input type="number" value={config.heroSlider?.random || 4} onChange={e => setConfig({ ...config, heroSlider: { ...(config.heroSlider || {}), random: Number(e.target.value) } })} className={inputCls} min={0} max={10} />
-                          </div>
+
                         </div>
                         <div className="mt-4">
                           <label className="text-xs text-muted-foreground">Texto del footer (pie de página)</label>

@@ -5,6 +5,7 @@ import ContentCarousel from "@/components/home/ContentCarousel";
 import Top10Carousel from "@/components/home/Top10Carousel";
 import PlatformFilter from "@/components/home/PlatformFilter";
 import IntentBar from "@/components/home/IntentBar";
+import EditorialCollections from "@/components/home/EditorialCollections";
 import Navbar from "@/components/layout/Navbar";
 import { Link } from "@/lib/react-router-shim";
 import { useContent } from "@/hooks/useContent";
@@ -120,27 +121,8 @@ const Index = () => {
     [content, sessionSeed],
   );
 
-  const enEstreno = useMemo(
-    () =>
-      seededShuffle(
-        content
-          .filter((c) => c.display_options?.home_sections?.includes("estreno"))
-          .sort((a, b) => (b.release_date || "").localeCompare(a.release_date || "")),
-        sessionSeed + 2,
-      ),
-    [content, sessionSeed],
-  );
-
-  const recienAgregado = useMemo(
-    () =>
-      seededShuffle(
-        content
-          .filter((c) => c.display_options?.home_sections?.includes("agregado"))
-          .sort((a, b) => (b.imported_at?.seconds || 0) - (a.imported_at?.seconds || 0)),
-        sessionSeed + 3,
-      ),
-    [content, sessionSeed],
-  );
+  const enEstreno = useMemo(() => content.filter((c) => c.display_options?.home_sections?.includes("estreno")).sort((a,b) => (b.release_date || "").localeCompare(a.release_date || "")), [content]);
+  const recienAgregado = useMemo(() => content.filter((c) => c.display_options?.home_sections?.includes("agregado")).sort((a,b) => (b.imported_at?.seconds || 0) - (a.imported_at?.seconds || 0)), [content]);
 
   const genreGroups = useMemo(() => {
     const genres = new Map<string, typeof content>();
@@ -165,49 +147,13 @@ const Index = () => {
     return genres;
   }, [content, sessionSeed]);
 
+  const manualTop = (webConfig?.top10?.manualIds || []) as string[];
   const top10Items = useMemo(() => {
-    const cfg = webConfig?.top10;
-    if (!cfg || cfg.enabled === false) return [];
-    const manualIds: string[] = cfg.manualIds || [];
-
-    // Check sessionStorage for cached top10
-    const cacheKey = "session_top10_ids";
-    const cached = sessionStorage.getItem(cacheKey);
-    if (cached) {
-      try {
-        const ids: string[] = JSON.parse(cached);
-        const items = ids
-          .map((id) => content.find((c) => String(c.id) === id || c.docId === id))
-          .filter(Boolean) as typeof content;
-        if (items.length > 0) return items;
-      } catch {}
-    }
-
-    // Build fresh top10
-    const manual = manualIds
-      .map((id) => content.find((c) => String(c.id) === id))
-      .filter(Boolean) as typeof content;
-
-    if (!cfg.random && manual.length > 0) {
-      const result = manual.slice(0, 10);
-      sessionStorage.setItem(cacheKey, JSON.stringify(result.map((c) => String(c.id))));
-      return result;
-    }
-
-    const remaining = 10 - manual.length;
-    if (remaining <= 0) {
-      const result = manual.slice(0, 10);
-      sessionStorage.setItem(cacheKey, JSON.stringify(result.map((c) => String(c.id))));
-      return result;
-    }
-
-    const manualIdSet = new Set(manualIds);
-    const others = content.filter((c) => !manualIdSet.has(String(c.id)));
-    const randomFill = seededShuffle(others, sessionSeed + 100).slice(0, remaining);
-    const result = [...manual, ...randomFill];
-    sessionStorage.setItem(cacheKey, JSON.stringify(result.map((c) => String(c.id))));
-    return result;
-  }, [content, webConfig?.top10, sessionSeed]);
+    if (webConfig?.top10?.enabled === false) return [];
+    const selected = manualTop.map(id => content.find(c => c.docId === id || String(c.id) === id)).filter(Boolean) as typeof content;
+    if (selected.length) return selected.slice(0,10);
+    return [...content].filter(c => (c.vote_average || 0) > 0).sort((a,b) => (b.vote_average || 0) - (a.vote_average || 0) || (b.vote_count || 0) - (a.vote_count || 0)).slice(0,10);
+  }, [content, webConfig?.top10]);
 
   const sections = webConfig?.homepageSections || {
     enEstreno: 20,
@@ -218,8 +164,8 @@ const Index = () => {
   const titles = {
     enEstreno: webConfig?.sectionTitles?.enEstreno || "En Estreno/Emisión",
     recienAgregado: webConfig?.sectionTitles?.recienAgregado || "Recién Agregado",
-    peliculasPopulares: webConfig?.sectionTitles?.peliculasPopulares || "Películas Populares",
-    seriesPopulares: webConfig?.sectionTitles?.seriesPopulares || "Series Populares",
+    peliculasPopulares: webConfig?.sectionTitles?.peliculasPopulares && !/populares/i.test(webConfig.sectionTitles.peliculasPopulares) ? webConfig.sectionTitles.peliculasPopulares : "Una película para hoy",
+    seriesPopulares: webConfig?.sectionTitles?.seriesPopulares && !/populares/i.test(webConfig.sectionTitles.seriesPopulares) ? webConfig.sectionTitles.seriesPopulares : "Tu próxima serie",
   };
 
   const isCategoryVisible = (key: string) => {
@@ -230,7 +176,7 @@ const Index = () => {
   // Las secciones curadas ya ocupan la portada. Las filas de género se limitan a
   // las más grandes; el resto queda a un clic en "Explorar todas las categorías",
   // para que la página no se vuelva una lista interminable.
-  const GENRE_ROW_LIMIT = 8;
+  const GENRE_ROW_LIMIT = 2;
   const normKey = (g: string) => g.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const visibleGenres = Array.from(genreGroups.entries())
     .filter(([genre]) => isCategoryVisible(normKey(genre)))
@@ -253,7 +199,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <h1 className="sr-only">{siteTitle}</h1>
+      <span className="sr-only">{siteTitle}</span>
       <Hero content={heroContent} allContent={content} heroConfig={webConfig?.heroSlider} />
 
       <div className="relative z-10 pt-2 pb-16">
@@ -263,6 +209,7 @@ const Index = () => {
           // orden y cuáles se muestran desde la pestaña "Secciones".
           const nodes: Record<string, ReactNode> = {
             intent: <IntentBar content={content} />,
+            collections: <EditorialCollections content={content} />,
             platforms: (
               <PlatformFilter content={content} visiblePlatforms={webConfig?.visiblePlatforms} />
             ),
@@ -292,7 +239,8 @@ const Index = () => {
             top10:
               top10Items.length > 0 ? (
                 <Top10Carousel
-                  title={webConfig?.top10?.title || "Lo más visto hoy"}
+                  title={manualTop.length ? (webConfig?.top10?.title && !/visto|popular|tendencia/i.test(webConfig.top10.title) ? webConfig.top10.title : "La selección de StreamFusion") : "Mejor valorados del catálogo"}
+                  subtitle={manualTop.length ? "Elegidos para tu próxima sesión" : "Ordenados por la puntuación disponible en el catálogo"}
                   items={top10Items}
                 />
               ) : null,
