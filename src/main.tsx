@@ -8,6 +8,10 @@ import { applyTvModeClass } from "./lib/tvMode";
 
 applyTvModeClass();
 
+// The app owns scroll restoration; the browser must not restore a stale
+// position after the asynchronous catalogue is inserted on reload.
+if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+
 /**
  * CRÍTICO: cargamos config.js ANTES de importar App.
  *
@@ -34,8 +38,7 @@ async function loadRuntimeConfig(): Promise<void> {
     const code = await res.text();
 
     const looksLikeHtml =
-      contentType.includes("text/html") ||
-      /^\s*<!doctype html|^\s*<html/i.test(code);
+      contentType.includes("text/html") || /^\s*<!doctype html|^\s*<html/i.test(code);
     if (looksLikeHtml) {
       if (!dev) {
         // eslint-disable-next-line no-console
@@ -58,9 +61,7 @@ async function loadRuntimeConfig(): Promise<void> {
     if (!window.__APP_CONFIG__) {
       if (!dev) {
         // eslint-disable-next-line no-console
-        console.error(
-          "[config] config.js se cargó pero no definió window.__APP_CONFIG__.",
-        );
+        console.error("[config] config.js se cargó pero no definió window.__APP_CONFIG__.");
         (window as unknown as { __CONFIG_LOAD_ERROR__?: string }).__CONFIG_LOAD_ERROR__ =
           "config.js se cargó pero no asignó window.__APP_CONFIG__. " +
           "Verifica que el archivo tenga el formato correcto.";
