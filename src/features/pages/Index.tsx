@@ -173,16 +173,13 @@ const Index = () => {
     return webConfig.visibleCategories.includes(key);
   };
 
-  // Las secciones curadas ya ocupan la portada. Las filas de género se limitan a
-  // las más grandes; el resto queda a un clic en "Explorar todas las categorías",
-  // para que la página no se vuelva una lista interminable.
-  const GENRE_ROW_LIMIT = 2;
+  // Mostrar todas las categorías habilitadas; las imágenes conservan lazy loading.
   const normKey = (g: string) => g.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const visibleGenres = Array.from(genreGroups.entries())
     .filter(([genre]) => isCategoryVisible(normKey(genre)))
     .sort((a, b) => b[1].length - a[1].length);
-  const genreRows = visibleGenres.slice(0, GENRE_ROW_LIMIT);
-  const moreGenres = visibleGenres.slice(GENRE_ROW_LIMIT);
+  const genreRows = visibleGenres;
+  const moreGenres = visibleGenres;
 
   if (loading) {
     return (
@@ -279,6 +276,7 @@ const Index = () => {
                     </div>
                   </section>
                 )}
+                <div className="sf-genre-library" data-genre-count={genreRows.length}>
                 {genreRows.map(([genre, items]) => (
                   <ContentCarousel
                     key={genre}
@@ -287,6 +285,7 @@ const Index = () => {
                     viewAllLink={`/category/${encodeURIComponent(genre)}`}
                   />
                 ))}
+                </div>
               </>
             ),
           };

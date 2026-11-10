@@ -63,7 +63,7 @@ export default function EditorialSettings({
       </label>
       <div className="space-y-2">
         <p className="text-xs">
-          Títulos fijados ({ids.length}/3). Sin selección, la portada se renueva cada día según el
+          Títulos fijados ({ids.length}/5). Sin selección, la portada se renueva cada día según el
           ambiente.
         </p>
         {ids.map((id) => (
@@ -95,7 +95,7 @@ export default function EditorialSettings({
               .map((c) => (
                 <button
                   type="button"
-                  disabled={ids.length >= 3}
+                  disabled={ids.length >= 5}
                   className="block text-left w-full p-2 text-xs hover:bg-secondary disabled:opacity-40"
                   key={c.docId || c.id}
                   onClick={() => {

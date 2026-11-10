@@ -64,7 +64,7 @@ export function editorialSelection(content: Content[], moodId = "mystery", ids: 
     items: [
       ...manual,
       ...dailySelection(pool).filter((c) => !seen.has(`${c.media_type}:${c.id}`)),
-    ].slice(0, 3),
+    ].slice(0, 5),
   };
 }
 

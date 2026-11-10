@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./styles.css";
 import "./editorial.css";
+import "./cinema.css";
 import { isDevHost } from "./lib/devHost";
 import { applyTvModeClass } from "./lib/tvMode";
 
