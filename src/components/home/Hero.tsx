@@ -38,8 +38,9 @@ const Hero = ({ content, allContent = [] }: HeroProps) => {
     [allContent, content, editorial.mood, editorial.ids],
   );
   const [active, setActive] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(true);
-  const [hovered, setHovered] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(
+    () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
   const [focused, setFocused] = useState(false);
   const [visible, setVisible] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(
@@ -47,12 +48,15 @@ const Hero = ({ content, allContent = [] }: HeroProps) => {
   );
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduceMotion(media.matches);
+    const update = () => {
+      setReduceMotion(media.matches);
+      if (media.matches) setAutoPlay(false);
+    };
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
   const stripRef = useRef<HTMLElement>(null);
-  const rotating = autoPlay && !hovered && !focused && visible && !reduceMotion;
+  const rotating = autoPlay && !focused && visible;
   const move = (direction: number) =>
     setActive((current) => (current + direction + selection.items.length) % selection.items.length);
   useEffect(() => {
@@ -90,8 +94,6 @@ const Hero = ({ content, allContent = [] }: HeroProps) => {
       className="sf-editorial-hero"
       aria-label="La selección de StreamFusion"
       style={{ "--sf-story-accent": selection.mood.color } as CSSProperties}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       onFocusCapture={(event) =>
         setFocused((event.target as HTMLElement).matches(":focus-visible"))
       }
@@ -214,16 +216,15 @@ const Hero = ({ content, allContent = [] }: HeroProps) => {
           <button onClick={() => move(-1)} aria-label="Título anterior">
             <ChevronLeft size={17} />
           </button>
-          {!reduceMotion && (
-            <button
-              onClick={() => setAutoPlay((value) => !value)}
-              aria-label={
-                autoPlay ? "Pausar cartelera automática" : "Reanudar cartelera automática"
-              }
-            >
-              {autoPlay ? <Pause size={14} /> : <Play size={14} />}
-            </button>
-          )}
+          <button
+            onClick={() => {
+              setAutoPlay((value) => !value);
+              setFocused(false);
+            }}
+            aria-label={autoPlay ? "Pausar cartelera automática" : "Reanudar cartelera automática"}
+          >
+            {autoPlay ? <Pause size={14} /> : <Play size={14} />}
+          </button>
           <button onClick={() => move(1)} aria-label="Título siguiente">
             <ChevronRight size={17} />
           </button>
