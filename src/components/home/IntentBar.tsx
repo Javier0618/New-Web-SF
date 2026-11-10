@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, RotateCw, Sparkles, Clock3, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Content } from "@/types/content";
@@ -9,7 +9,24 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchMovieRuntime } from "@/lib/tmdb";
 import { trackExperience } from "@/lib/experienceAnalytics";
 
+const localDayPeriod = () => {
+  const hour = new Date().getHours();
+  return hour >= 5 && hour < 12 ? "mañana" : hour >= 12 && hour < 19 ? "tarde" : "noche";
+};
+
 const IntentBar = ({ content }: { content: Content[] }) => {
+  const [dayPeriod, setDayPeriod] = useState(localDayPeriod);
+  useEffect(() => {
+    const update = () => setDayPeriod(localDayPeriod());
+    const timer = window.setInterval(update, 30_000);
+    window.addEventListener("focus", update);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", update);
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, []);
   const [mood, setMood] = useState("all");
   const [time, setTime] = useState("any");
   const [company, setCompany] = useState("solo");
@@ -107,7 +124,8 @@ const IntentBar = ({ content }: { content: Content[] }) => {
         <div>
           <span className="sf-eyebrow">MENOS BUSCAR. MÁS DISFRUTAR.</span>
           <h2 id="night-title">
-            Elige tu noche<span className="sf-accent">.</span>
+            Elige tu {dayPeriod}
+            <span className="sf-accent">.</span>
           </h2>
         </div>
         <p>
