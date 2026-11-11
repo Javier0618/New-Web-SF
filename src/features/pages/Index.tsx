@@ -13,6 +13,7 @@ import { canonicalGenre } from "@/lib/genres";
 import { resolveHomeOrder } from "@/lib/homeSections";
 import { useWebConfig } from "@/hooks/useWebConfig";
 import AdBanner from "@/components/ads/AdBanner";
+import SponsorCard from "@/components/ads/SponsorCard";
 import ContinueWatchingRow from "@/components/home/ContinueWatchingRow";
 import {
   Swords,
@@ -294,7 +295,7 @@ const Index = () => {
           return order.map((s, i) => (
             <Fragment key={s.id}>
               {nodes[s.id]}
-              {i === mid && <AdBanner slot="home_middle" className="px-4 md:px-10 my-4" />}
+              {i === mid && <><SponsorCard /><AdBanner slot="home_middle" className="px-4 md:px-10 my-4" /></>}
             </Fragment>
           ));
         })()}

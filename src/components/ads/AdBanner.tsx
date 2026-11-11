@@ -1,5 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWebConfig } from "@/hooks/useWebConfig";
+import { X } from "lucide-react";
+import { readAdDismissal, rememberAdDismissal } from "@/lib/sponsor";
 
 export type AdSlot =
   | "home_top"
@@ -26,11 +28,14 @@ const AdBanner = ({ slot, className = "" }: AdBannerProps) => {
   const { data: config } = useWebConfig();
   const containerRef = useRef<HTMLDivElement>(null);
   const injectedRef = useRef(false);
+  const [closedSlot, setClosedSlot] = useState("");
+  const dismissalKey = `sf:ad-slot:dismissed:v1:${slot}`;
+  const dismissed = closedSlot === slot || readAdDismissal(dismissalKey);
 
   const adsConfig = config?.ads;
   const slotConfig = adsConfig?.slots?.[slot];
 
-  const isActive = adsConfig?.enabled && slotConfig?.enabled && slotConfig?.code;
+  const isActive = !dismissed && adsConfig?.enabled && slotConfig?.enabled && slotConfig?.code;
 
   useEffect(() => {
     if (!isActive || !containerRef.current || injectedRef.current) return;
@@ -73,14 +78,29 @@ const AdBanner = ({ slot, className = "" }: AdBannerProps) => {
   if (!isActive) return null;
 
   return (
-    <div
-      ref={containerRef}
-      id={`ad-slot-${slot}`}
-      className={`ad-slot ad-container advertisement adsbox banner-ad w-full flex items-center justify-center overflow-hidden ${className}`}
-      data-ad-slot={slot}
-      data-ad-slot-active="true"
-      aria-label={`Espacio publicitario ${slot}`}
-    />
+    <section className={`sf-dismissible-placement ${className}`} aria-label="Publicidad">
+      <div className="sf-placement-toolbar">
+        <span>PUBLICIDAD</span>
+        <button
+          type="button"
+          onClick={() => {
+            rememberAdDismissal(dismissalKey);
+            setClosedSlot(slot);
+          }}
+          aria-label="Cerrar este anuncio durante la visita"
+        >
+          Cerrar <X size={14} aria-hidden="true" />
+        </button>
+      </div>
+      <div
+        ref={containerRef}
+        id={`ad-slot-${slot}`}
+        className="ad-slot ad-container advertisement adsbox banner-ad w-full flex items-center justify-center overflow-hidden"
+        data-ad-slot={slot}
+        data-ad-slot-active="true"
+        aria-label={`Espacio publicitario ${slot}`}
+      />
+    </section>
   );
 };
 

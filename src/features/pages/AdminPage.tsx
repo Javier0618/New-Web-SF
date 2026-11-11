@@ -1,4 +1,6 @@
 import EditorialSettings from "@/components/admin/EditorialSettings";
+import SponsorSettings from "@/components/admin/SponsorSettings";
+import { safeSponsorUrl, sponsorConfig } from "@/lib/sponsor";
 import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -909,6 +911,12 @@ const AdminPage = () => {
       return;
     }
     try {
+      const sponsor = sponsorConfig(configToSave.sponsor);
+      if (sponsor.url.trim() && !safeSponsorUrl(sponsor.url)) {
+        toast({ title: "Revisa el enlace patrocinado", description: "Introduce una URL HTTPS válida en Configuración → Anuncios.", variant: "destructive" });
+        return;
+      }
+      configToSave.sponsor = { ...sponsor, url: sponsor.url.trim(), provider: sponsor.provider.trim() };
       await updateWebConfig(configToSave);
       queryClient.invalidateQueries({ queryKey: ["web-config"] });
       toast({ title: "Guardado", description: "Configuración guardada" });
@@ -1954,6 +1962,7 @@ const AdminPage = () => {
                   {settingsSubTab === "anuncios" && (
                     <div>
                       <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">📢 Anuncios</h3>
+                      <SponsorSettings value={config.sponsor} onChange={sponsor => setConfig({ ...config, sponsor })} />
                       <label className="flex items-center gap-3 cursor-pointer mb-4">
                         <span className="text-sm font-medium">Activar anuncios globalmente</span>
                         <div
