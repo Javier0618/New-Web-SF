@@ -158,11 +158,8 @@ const EpisodeItem = ({
   );
 };
 
-const ContentPage = () => {
-  const { slug, id } = useParams();
+const ContentDetailPage = ({ docId }: { docId: string }) => {
   const [searchParams] = useSearchParams();
-  const rawParam = slug ?? id ?? "";
-  const docId = slug ? extractDocId(rawParam) : rawParam;
   const navigate = useNavigate();
   const { user } = useAuth();
   const accountReady = useAccountProgressReady();
@@ -598,7 +595,7 @@ const ContentPage = () => {
               /* Portada grande antes de reproducir */
               <div
                 ref={playerBoxRef}
-                className="relative w-full aspect-video rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] group"
+                className="sf-video-frame relative w-full aspect-video rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] group"
               >
                 <img
                   src={backdrop}
@@ -863,6 +860,15 @@ const ContentPage = () => {
       {!playingUrl && resumeTarget && <div className="sf-mobile-play"><span>{content.title}</span><button onClick={startMain} className="sf-button-primary"><Play size={14} fill="currentColor" />{ctaLabel}</button></div>}
     </div>
   );
+};
+
+// React Router reuses this route for other titles, including cached details.
+// Each document owns its playback, episode selection and progress callbacks.
+// Remount that state atomically, before the new document can render a player.
+const ContentPage = () => {
+  const { slug, id } = useParams();
+  const docId = slug ? extractDocId(slug) : id ?? "";
+  return <ContentDetailPage key={docId} docId={docId} />;
 };
 
 export default ContentPage;

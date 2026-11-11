@@ -72,7 +72,7 @@ const VideoPlayer = ({ url, title, bridge }: VideoPlayerProps) => {
   );
 
   const frameCls =
-    "relative w-full aspect-video bg-black rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]";
+    "sf-video-frame relative w-full aspect-video bg-black rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]";
 
   if (isIframe) {
     return (
