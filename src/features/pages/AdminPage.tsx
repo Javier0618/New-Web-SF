@@ -1,6 +1,7 @@
 import EditorialSettings from "@/components/admin/EditorialSettings";
 import SponsorSettings from "@/components/admin/SponsorSettings";
 import { safeSponsorUrl, sponsorConfig } from "@/lib/sponsor";
+import { defaultNativeCode } from "@/lib/nativeAds";
 import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -2013,6 +2014,7 @@ const AdminPage = () => {
                           <p className="text-xs text-muted-foreground">Slots de anuncios por sección (HTML/JS de tu plataforma — AdSense, Adsterra, Exoclick, etc.)</p>
                           {[
                             { id: "home_top", label: "Inicio — Arriba" },
+                            { id: "home_native", label: "Inicio — Descubre más (Native Banner)" },
                             { id: "home_middle", label: "Inicio — Medio" },
                             { id: "home_bottom", label: "Inicio — Abajo" },
                             { id: "movies_top", label: "Películas — Arriba" },
@@ -2027,7 +2029,7 @@ const AdminPage = () => {
                             { id: "content_middle", label: "Contenido (ver) — Medio" },
                             { id: "content_bottom", label: "Contenido (ver) — Abajo" },
                           ].map(slot => {
-                            const slotData = config.ads?.slots?.[slot.id] || { enabled: false, code: "" };
+                            const slotData = config.ads?.slots?.[slot.id] || (slot.id === "home_native" ? { enabled: true, code: defaultNativeCode } : { enabled: false, code: "" });
                             return (
                               <div key={slot.id} className="border border-border rounded-lg p-3">
                                 <div className="flex items-center justify-between mb-2">
@@ -2044,6 +2046,8 @@ const AdminPage = () => {
                                   </div>
                                 </div>
                                 {slotData.enabled && (
+                                  <>
+                                  {slot.id === "home_native" && <p className="text-xs text-muted-foreground mb-2">Se integra como sección «Descubre más», sin botón de cierre. Puedes moverla en Secciones. Para las tarjetas internas, configura tema oscuro, fuente y colores desde Adsterra → Native Banner → Get code. Pega aquí el código actualizado.</p>}
                                   <textarea
                                     value={slotData.code || ""}
                                     onChange={e => {
@@ -2055,6 +2059,7 @@ const AdminPage = () => {
                                     className={inputCls + " font-mono text-xs min-h-[80px]"}
                                     rows={3}
                                   />
+                                  </>
                                 )}
                               </div>
                             );

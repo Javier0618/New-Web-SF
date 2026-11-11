@@ -1,0 +1,63 @@
+/* Styles our placement, preserving the provider's creatives and click targets. */
+.sf-native-section {
+  min-width: 0;
+}
+.sf-native-section:not(.is-filled) {
+  margin-block: 0;
+}
+.sf-native-heading:not([hidden]) {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.sf-native-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  color: hsl(var(--primary));
+}
+.sf-native-heading h2 {
+  font-family: inherit;
+  font-size: clamp(21px, 2vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+.sf-native-disclosure {
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+  text-align: right;
+}
+.sf-native-mount {
+  width: 100%;
+  min-width: 0;
+  color: hsl(var(--foreground));
+  font-family: inherit;
+  color-scheme: dark;
+}
+.sf-native-mount > [id^="container-"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border-radius: 16px;
+  background: hsl(var(--secondary) / 0.2);
+}
+.sf-native-mount iframe {
+  max-width: 100%;
+  border: 0;
+}
+@media (max-width: 767px) {
+  .sf-native-heading:not([hidden]) {
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .sf-native-disclosure {
+    max-width: 100px;
+    line-height: 1.5;
+  }
+}

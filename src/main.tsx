@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./styles.css";
 import "./editorial.css";
 import "./sponsor.css";
+import "./native-ads.css";
 import "./cinema.css";
 import "./footer.css";
 import { isDevHost } from "./lib/devHost";

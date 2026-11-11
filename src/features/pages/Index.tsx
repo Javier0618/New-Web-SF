@@ -212,6 +212,7 @@ const Index = () => {
               <PlatformFilter content={content} visiblePlatforms={webConfig?.visiblePlatforms} />
             ),
             continue: <ContinueWatchingRow content={content} />,
+            nativeAds: <AdBanner slot="home_native" className="px-4 md:px-10 mb-10" />,
             enEstreno:
               isCategoryVisible("enEstreno") && enEstreno.length > 0 ? (
                 <ContentCarousel
