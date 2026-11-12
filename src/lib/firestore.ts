@@ -139,19 +139,35 @@ export const fetchContentCount = async (): Promise<number> => {
   return snap.data().count;
 };
 
+// La app móvil guarda el catálogo en el teléfono y solo pide lo que cambió: los títulos con
+// `updated_at` posterior a su copia y los borrados anotados en web_config/content_catalog.deleted.
+// Sin esto, lo que se agrega, edita o borra desde la web no llega a la app.
+const markContentDeleted = (ids: string[]) =>
+  setDoc(
+    doc(db, "web_config", "content_catalog"),
+    { deleted: Object.fromEntries(ids.map((id) => [id, Date.now()])) },
+    { merge: true },
+  );
+
 export const createContent = async (data: Omit<Content, "docId">) => {
-  const ref = await addDoc(getContentCollection(), data);
+  const ref = await addDoc(getContentCollection(), { ...data, updated_at: serverTimestamp() });
   await syncIndex(ref.id);
   return ref;
 };
 
 export const updateContent = async (docId: string, data: Partial<Content>) => {
-  await updateDoc(doc(db, "content", docId), data);
+  await updateDoc(doc(db, "content", docId), { ...data, updated_at: serverTimestamp() });
   await syncIndex(docId);
 };
 
 export const deleteContent = async (docId: string) => {
+  // La app identifica cada título por su campo `id` (TMDB); se anotan los dos por si difieren del docId
+  const snap = await getDoc(doc(db, "content", docId));
+  const tmdbId = snap.exists() ? snap.data().id : undefined;
   await deleteDoc(doc(db, "content", docId));
+  const ids = [docId];
+  if (tmdbId != null && String(tmdbId) !== docId) ids.push(String(tmdbId));
+  await markContentDeleted(ids).catch((err) => console.warn("[catálogo] no se pudo anotar el borrado", err));
   await syncIndex(docId);
 };
 
