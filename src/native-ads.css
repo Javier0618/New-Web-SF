@@ -1,0 +1,163 @@
+/* StreamFusion presentation for Adsterra's native HTML. Preserve its creative
+   content, link overlays, tracking, disclosure and reporting controls. */
+.sf-native-section {
+  min-width: 0;
+}
+.sf-native-section:not(.is-filled) {
+  margin-block: 0;
+}
+.sf-native-heading:not([hidden]) {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.sf-native-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  color: hsl(var(--primary));
+}
+.sf-native-heading h2 {
+  font-family: inherit;
+  font-size: clamp(20px, 1.7vw, 24px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+.sf-native-disclosure {
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+  text-align: right;
+}
+.sf-native-mount {
+  width: 100%;
+  min-width: 0;
+  color: hsl(var(--foreground));
+  font-family: inherit;
+  color-scheme: dark;
+}
+.sf-native-mount > [id^="container-"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  background: transparent;
+}
+.sf-native-mount iframe {
+  max-width: 100%;
+  border: 0;
+}
+
+/* The provider prefixes these class suffixes with the placement's container ID.
+   Scope only its visible layout classes; leave report/cancel UI untouched. */
+.sf-native-mount [class$="__stand"] {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(190px, 1fr) !important;
+  justify-content: normal !important;
+  gap: 14px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 0 6px !important;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+.sf-native-mount [class$="__bn-container"] {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  scroll-snap-align: start;
+}
+.sf-native-mount [class$="__bn"] {
+  position: relative;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid hsl(var(--border) / 0.65);
+  border-radius: 14px;
+  background: hsl(var(--secondary) / 0.45);
+  overflow: hidden;
+  font-family: inherit !important;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+.sf-native-mount [class$="__bn"]:hover,
+.sf-native-mount [class$="__bn"]:focus-within {
+  border-color: hsl(var(--primary) / 0.5);
+  background: hsl(var(--secondary) / 0.75);
+}
+.sf-native-mount [class$="__img-container"] {
+  width: 100%;
+  overflow: hidden;
+  background: hsl(var(--background));
+}
+.sf-native-mount [class$="__img"] {
+  width: 100% !important;
+  padding-top: 56.25% !important;
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+.sf-native-mount [class$="__title"] {
+  min-height: 74px !important;
+  margin: 0 !important;
+  padding: 13px 72px 13px 12px !important;
+  color: hsl(var(--foreground)) !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 1.45 !important;
+  text-align: left !important;
+  overflow-wrap: anywhere;
+}
+.sf-native-mount [class$="__title"]::after {
+  content: "Oferta patrocinada";
+  display: block;
+  margin-top: 5px;
+  color: hsl(var(--muted-foreground));
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+.sf-native-mount [class$="__bn"]::after {
+  content: "Visitar ↗";
+  position: absolute;
+  right: 12px;
+  bottom: 16px;
+  z-index: 1;
+  pointer-events: none;
+  color: hsl(var(--foreground));
+  font-size: 11px;
+  font-weight: 600;
+}
+.sf-native-mount [class$="__link"]:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: -3px;
+  border-radius: 14px;
+}
+@media (max-width: 767px) {
+  .sf-native-mount [class$="__stand"] {
+    grid-auto-columns: minmax(220px, 76vw) !important;
+    gap: 12px !important;
+  }
+  .sf-native-heading:not([hidden]) {
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .sf-native-disclosure {
+    max-width: 100px;
+    line-height: 1.5;
+  }
+}

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "@/lib/react-router-shim";
 import { useAuth } from "@/contexts/AuthContext";
-import { Search, User, LogOut, Shield, X, Home, Film, Tv, Sparkles, Heart } from "lucide-react";
+import { Search, User, LogOut, Shield, X, Home, Film, Tv, Sparkles, Heart, Compass } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useWebConfig } from "@/hooks/useWebConfig";
 
@@ -8,6 +8,7 @@ const DEFAULT_LOGO = "https://raw.githubusercontent.com/Javier0618/Imagenes/main
 
 const links = [
   { to: "/", label: "Inicio", icon: Home },
+  { to: "/explore", label: "Explorar", icon: Compass },
   { to: "/movies", label: "Películas", icon: Film },
   { to: "/series", label: "Series", icon: Tv },
   { to: "/animes", label: "Animes", icon: Sparkles },
@@ -24,6 +25,12 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const mobileInputRef = useRef<HTMLInputElement>(null);
+  const mobileLinks = [
+    { to: "/", label: "Inicio", icon: Home },
+    { to: "/explore", label: "Explorar", icon: Compass },
+    { to: "/search", label: "Buscar", icon: Search },
+    { to: user ? "/profile" : "/login", label: "Mi espacio", icon: User },
+  ];
 
   // Transparente sobre el hero; sólida al hacer scroll
   useEffect(() => {
@@ -60,7 +67,7 @@ const Navbar = () => {
         {searchOpen && (
           <form
             onSubmit={handleSearchSubmit}
-            className="md:hidden absolute inset-0 z-10 flex items-center gap-3 bg-background px-4"
+            className="xl:hidden absolute inset-0 z-10 flex items-center gap-3 bg-background px-4"
           >
             <Search className="w-5 h-5 text-primary flex-shrink-0" />
             <input
@@ -84,17 +91,18 @@ const Navbar = () => {
         )}
 
         <div className="flex items-center gap-6 h-16 px-4 md:px-10">
-          <Link to="/" className="flex-shrink-0">
+          <Link to="/" className="flex-shrink-0 flex items-center gap-2.5" aria-label="StreamFusion, inicio">
             <img src={logoUrl} alt="StreamFusion" className="h-7 md:h-8 object-contain" />
+            <span className="hidden sm:block font-display font-bold tracking-tight text-lg">Stream<span className="text-primary">Fusion</span></span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-0.5">
             {links.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
                 aria-current={isActive(l.to) ? "page" : undefined}
-                className={`px-3.5 py-1.5 rounded-full text-[15px] font-semibold transition-all ${
+                className={`px-2.5 py-1.5 rounded-full text-[13px] font-semibold transition-all ${
                   isActive(l.to)
                     ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
                     : "text-foreground/65 hover:text-foreground hover:bg-white/5"
@@ -106,7 +114,7 @@ const Navbar = () => {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <form onSubmit={handleSearchSubmit} className="hidden md:block relative">
+            <form onSubmit={handleSearchSubmit} className="hidden xl:block relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
                 type="search"
@@ -119,7 +127,7 @@ const Navbar = () => {
             </form>
             <button
               onClick={openMobileSearch}
-              className="md:hidden p-2 rounded-full hover:bg-accent"
+              className="xl:hidden p-2 rounded-full hover:bg-accent"
               aria-label="Buscar"
             >
               <Search className="w-5 h-5" />
@@ -169,9 +177,9 @@ const Navbar = () => {
       {/* Barra inferior en móvil: las secciones quedan al alcance del pulgar */}
       <nav
         aria-label="Secciones"
-        className="md:hidden fixed bottom-0 inset-x-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-t border-border/70 grid grid-cols-5 pb-[env(safe-area-inset-bottom)]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 min-h-16 bg-background/95 backdrop-blur-xl border-t border-border/70 grid grid-cols-4 pb-[env(safe-area-inset-bottom)]"
       >
-        {links.map(({ to, label, icon: Icon }) => {
+        {mobileLinks.map(({ to, label, icon: Icon }) => {
           const active = isActive(to);
           return (
             <Link

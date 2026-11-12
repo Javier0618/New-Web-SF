@@ -6,6 +6,9 @@ import Navbar from "@/components/layout/Navbar";
 import ContentCard from "@/components/home/ContentCard";
 import { useContent } from "@/hooks/useContent";
 import type { Content } from "@/types/content";
+import { useQuery } from "@tanstack/react-query";
+import { searchActorCredits } from "@/lib/tmdb";
+import { canonicalGenre } from "@/lib/genres";
 
 /** Strip diacritics and lowercase — makes search accent-insensitive */
 const normalize = (str: unknown): string =>
@@ -17,14 +20,23 @@ const normalize = (str: unknown): string =>
 
 const SearchPage = () => {
   const { content, loading } = useContent();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [typeFilter, setTypeFilter] = useState<"all" | "movie" | "tv">("all");
+  const [actorQuery, setActorQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(42);
+  useEffect(() => {
+    const timer = setTimeout(() => setActorQuery(query.trim()), 500);
+    setVisibleCount(42);
+    return () => clearTimeout(timer);
+  }, [query]);
+  const { data: actorTitles = [], isFetching: checkingActors, isError: actorError } = useQuery({ queryKey: ["actor-credits", actorQuery], queryFn: () => searchActorCredits(actorQuery), enabled: actorQuery.length >= 3, staleTime: 60 * 60_000, retry: false });
+  const actorMatches = useMemo(() => new Set(actorTitles), [actorTitles]);
 
   // Sync query from URL param when navigating from Navbar
   useEffect(() => {
     const q = searchParams.get("q");
-    if (q) setQuery(q);
+    setQuery(q || "");
   }, [searchParams]);
 
   // Mantiene el input fluido en móviles con catálogos grandes
@@ -39,13 +51,13 @@ const SearchPage = () => {
       if (typeFilter !== "all" && c.media_type !== typeFilter) return false;
 
       // Search in: title (ES), original_title (EN), overview, genres
-      const fields = [c.title, c.original_title ?? "", c.overview ?? "", ...(c.genres ?? [])].map(
+      const fields = [c.title, c.original_title ?? "", c.overview ?? "", ...(c.genres ?? []).map(canonicalGenre), ...(c.cast_names || [])].map(
         normalize,
       );
 
-      return fields.some((f) => f.includes(q));
+      return fields.some((f) => f.includes(q)) || (normalize(actorQuery) === q && actorMatches.has(`${c.media_type}:${c.id}`));
     });
-  }, [content, deferredQuery, typeFilter]);
+  }, [content, deferredQuery, typeFilter, actorQuery, actorMatches]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,13 +76,14 @@ const SearchPage = () => {
             autoFocus
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setSearchParams(e.target.value ? { q: e.target.value } : {}, { replace: true }); }}
+            aria-label="Buscar por título, actor o género"
             placeholder="Título, actor o género, en español o inglés"
             className="w-full pl-12 pr-12 py-4 rounded-2xl bg-card border border-border text-foreground placeholder:text-muted-foreground text-base focus:outline-none focus:border-primary transition"
           />
           {query && (
             <button
-              onClick={() => setQuery("")}
+              onClick={() => { setQuery(""); setSearchParams({}, { replace: true }); }}
               aria-label="Borrar búsqueda"
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -100,6 +113,8 @@ const SearchPage = () => {
 
       {/* Results */}
       <div className="px-4 md:px-10 pb-16">
+        {checkingActors && <p className="text-xs text-muted-foreground mb-4" role="status">Buscando también en el reparto…</p>}
+        {actorError && <p className="text-xs text-muted-foreground mb-4">La búsqueda por actores no está disponible en este momento. Puedes seguir buscando por título o género.</p>}
         {loading ? (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-3 gap-y-5 md:gap-x-4 md:gap-y-6">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -131,10 +146,11 @@ const SearchPage = () => {
                 {results.length} resultado{results.length !== 1 ? "s" : ""} para "{query}"
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-3 gap-y-5 md:gap-x-4 md:gap-y-6">
-                {results.map((item, i) => (
+                {results.slice(0, visibleCount).map((item, i) => (
                   <ContentCard key={item.docId || item.id} content={item} index={i} grid />
                 ))}
               </div>
+              {results.length > visibleCount && <button className="sf-button-secondary mt-6" onClick={() => setVisibleCount((n) => n + 42)}>Mostrar más resultados</button>}
             </motion.div>
           </AnimatePresence>
         )}

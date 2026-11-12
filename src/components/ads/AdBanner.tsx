@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWebConfig } from "@/hooks/useWebConfig";
+import { defaultNativeCode, isNativeAdCode } from "@/lib/nativeAds";
 
 export type AdSlot =
   | "home_top"
   | "home_middle"
   | "home_bottom"
+  | "home_native"
   | "movies_top"
   | "movies_bottom"
   | "series_top"
@@ -28,7 +30,11 @@ const AdBanner = ({ slot, className = "" }: AdBannerProps) => {
   const injectedRef = useRef(false);
 
   const adsConfig = config?.ads;
-  const slotConfig = adsConfig?.slots?.[slot];
+  const slotConfig =
+    adsConfig?.slots?.[slot] ??
+    (slot === "home_native" ? { enabled: true, code: defaultNativeCode } : undefined);
+  const native = isNativeAdCode(slotConfig?.code);
+  const [nativeReady, setNativeReady] = useState(false);
 
   const isActive = adsConfig?.enabled && slotConfig?.enabled && slotConfig?.code;
 
@@ -45,7 +51,15 @@ const AdBanner = ({ slot, className = "" }: AdBannerProps) => {
     temp.innerHTML = slotConfig.code;
 
     // Move nodes and execute scripts
-    Array.from(temp.childNodes).forEach((node) => {
+    const nodes = Array.from(temp.childNodes);
+    // Native loaders require their target container to exist before they run.
+    const ordered = native
+      ? [
+          ...nodes.filter((node) => node.nodeName !== "SCRIPT"),
+          ...nodes.filter((node) => node.nodeName === "SCRIPT"),
+        ]
+      : nodes;
+    ordered.forEach((node) => {
       if (node.nodeName === "SCRIPT") {
         const script = document.createElement("script");
         const origScript = node as HTMLScriptElement;
@@ -68,9 +82,44 @@ const AdBanner = ({ slot, className = "" }: AdBannerProps) => {
     return () => {
       injectedRef.current = false;
     };
-  }, [isActive, slotConfig?.code]);
+  }, [isActive, slotConfig?.code, native]);
+
+  useEffect(() => {
+    setNativeReady(false);
+    const container = containerRef.current;
+    if (!native || !isActive || !container) return;
+    const update = () => setNativeReady(container.getBoundingClientRect().height >= 40);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [native, isActive, slotConfig?.code]);
 
   if (!isActive) return null;
+
+  if (native)
+    return (
+      <section
+        className={`sf-native-section ${nativeReady ? "is-filled" : ""} ${className}`}
+        aria-label="Recomendaciones patrocinadas"
+      >
+        <div className="sf-native-heading" hidden={!nativeReady}>
+          <div>
+            <span className="sf-native-eyebrow">PUBLICIDAD</span>
+            <h2>Descubre más</h2>
+          </div>
+          <span className="sf-native-disclosure">Contenido patrocinado</span>
+        </div>
+        <div
+          ref={containerRef}
+          id={`ad-slot-${slot}`}
+          className="sf-native-mount ad-slot"
+          data-ad-slot={slot}
+          data-ad-slot-active="true"
+          aria-label="Anuncios de nuestros patrocinadores"
+        />
+      </section>
+    );
 
   return (
     <div

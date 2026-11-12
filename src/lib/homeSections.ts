@@ -14,10 +14,12 @@ export interface HomeSectionDef {
 
 export const HOME_SECTIONS: HomeSectionDef[] = [
   { id: "intent", label: "¿Qué te gustaría ver? (barra de intención)" },
+  { id: "collections", label: "Colecciones editoriales" },
   { id: "platforms", label: "Filtro de plataformas" },
   { id: "continue", label: "Seguir viendo" },
   { id: "enEstreno", label: "En Estreno / Emisión" },
   { id: "recienAgregado", label: "Recién Agregado" },
+  { id: "nativeAds", label: "Descubre más — Native Banner (publicidad)" },
   { id: "peliculas", label: "Películas Populares" },
   { id: "top10", label: "Top 10 / Lo más visto" },
   { id: "series", label: "Series Populares" },
@@ -46,7 +48,14 @@ export function resolveHomeOrder(saved?: HomeSectionState[] | null): HomeSection
     }
   });
   HOME_SECTIONS.forEach((s) => {
-    if (!seen.has(s.id)) result.push({ id: s.id, enabled: true });
+    if (!seen.has(s.id)) {
+      if (s.id === "nativeAds" && result.some((row) => row.id === "peliculas")) {
+        result.splice(result.findIndex((row) => row.id === "peliculas"), 0, { id: s.id, enabled: true });
+        return;
+      }
+      if (s.id === "collections" && result.some((row) => row.id === "intent")) result.splice(result.findIndex((row) => row.id === "intent") + 1, 0, { id: s.id, enabled: true });
+      else result.push({ id: s.id, enabled: true });
+    }
   });
   return result;
 }

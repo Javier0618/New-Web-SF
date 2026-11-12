@@ -78,6 +78,10 @@ export const useContentDetail = (docId: string | undefined) => {
         return {
           ...firestoreContent,
           credits: tmdbData.credits,
+          runtime: tmdbData.runtime,
+          episode_run_time: tmdbData.episode_run_time,
+          status: tmdbData.status,
+          original_language: tmdbData.original_language,
         };
       } catch (error) {
         console.error("Error fetching TMDB credits:", error);

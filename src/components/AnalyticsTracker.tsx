@@ -15,6 +15,7 @@ const getPageTitle = (pathname: string, base: string): string => {
   if (pathname === "/animes") return `Animes - ${base}`;
   if (pathname === "/doramas") return `Doramas - ${base}`;
   if (pathname === "/search") return `Buscar - ${base}`;
+  if (pathname === "/explore") return `Explora tu próxima historia - ${base}`;
   if (pathname === "/login") return `Iniciar Sesión - ${base}`;
   if (pathname === "/profile") return `Mi Perfil - ${base}`;
   if (pathname === "/messages") return `Mensajes - ${base}`;

@@ -1,0 +1,16 @@
+/* Keep the entire 16:9 player below the fixed navigation and above the
+   bottom navigation, even on short laptop screens or mobile landscape. */
+.sf-video-frame {
+  scroll-margin-top: 80px;
+  margin-inline: auto;
+  max-width: calc((100vh - 104px - var(--sf-bottom-nav, 0px)) * 1.7777778);
+  max-width: calc((100dvh - 104px - var(--sf-bottom-nav, 0px)) * 1.7777778);
+}
+
+.sf-video-frame:fullscreen {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+  border-radius: 0;
+}

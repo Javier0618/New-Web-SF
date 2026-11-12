@@ -9,6 +9,7 @@ import LicenseBlock from "@/components/LicenseBlock";
 import FloatingButton from "@/components/FloatingButton";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import ScrollToTop from "@/components/ScrollToTop";
+import AccountProgressSync from "@/components/AccountProgressSync";
 import ThemeApplier from "@/components/ThemeApplier";
 import AdsCodeInjector from "@/components/ads/AdsCodeInjector";
 import AntiAdblock from "@/components/ads/AntiAdblock";
@@ -30,6 +31,7 @@ const AdminPage = lazy(() => import("@/features/pages/AdminPage"));
 const ProfilePage = lazy(() => import("@/features/pages/ProfilePage"));
 const MessagesPage = lazy(() => import("@/features/pages/MessagesPage"));
 const SearchPage = lazy(() => import("@/features/pages/SearchPage"));
+const ExplorePage = lazy(() => import("@/features/pages/ExplorePage"));
 const ContentPage = lazy(() => import("@/features/pages/ContentPage"));
 const CategoryPage = lazy(() => import("@/features/pages/CategoryPage"));
 const WatchPage = lazy(() => import("@/features/pages/WatchPage"));
@@ -96,6 +98,7 @@ export default function App() {
         <LicenseProvider>
           <LicenseGate>
             <AuthProvider>
+              <AccountProgressSync />
               <TooltipProvider>
                 <ThemeApplier />
                 <AdsCodeInjector />
@@ -122,6 +125,7 @@ export default function App() {
                       <Route path="/profile" element={<ProfilePage />} />
                       <Route path="/messages" element={<MessagesPage />} />
                       <Route path="/search" element={<SearchPage />} />
+                      <Route path="/explore" element={<ExplorePage />} />
                       <Route path="/content/:id" element={<ContentPage />} />
                       <Route path="/pelicula/:slug" element={<ContentPage />} />
                       <Route path="/serie/:slug" element={<ContentPage />} />
