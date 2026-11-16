@@ -10,6 +10,7 @@ import FloatingButton from "@/components/FloatingButton";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import ScrollToTop from "@/components/ScrollToTop";
 import AccountProgressSync from "@/components/AccountProgressSync";
+import CatalogRefresh from "@/components/CatalogRefresh";
 import ThemeApplier from "@/components/ThemeApplier";
 import AdsCodeInjector from "@/components/ads/AdsCodeInjector";
 import AntiAdblock from "@/components/ads/AntiAdblock";
@@ -99,6 +100,7 @@ export default function App() {
           <LicenseGate>
             <AuthProvider>
               <AccountProgressSync />
+              <CatalogRefresh />
               <TooltipProvider>
                 <ThemeApplier />
                 <AdsCodeInjector />

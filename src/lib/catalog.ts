@@ -84,9 +84,10 @@ export const readCatalogIndex = async (): Promise<Content[] | null> => {
   return items as Content[];
 };
 
-interface LocalCache {
+export interface LocalCache {
   t: number;
   items: Content[];
+  revision?: string;
 }
 
 export const readLocalCatalog = (): LocalCache | null => {
@@ -101,9 +102,9 @@ export const readLocalCatalog = (): LocalCache | null => {
   }
 };
 
-export const writeLocalCatalog = (items: Content[]) => {
+export const writeLocalCatalog = (items: Content[], revision?: string) => {
   try {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify({ t: Date.now(), items }));
+    localStorage.setItem(LOCAL_KEY, JSON.stringify({ t: Date.now(), items, revision }));
   } catch {
     /* cuota del navegador llena o modo privado: ignoramos */
   }

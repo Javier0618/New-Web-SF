@@ -68,7 +68,7 @@ const syncIndex = async (docId: string) => {
 };
 
 export const importContent = async (data: Omit<Content, "docId">, tmdbId: number) => {
-  await setDoc(doc(db, "content", String(tmdbId)), data);
+  await setDoc(doc(db, "content", String(tmdbId)), { ...data, updated_at: serverTimestamp() });
   await syncIndex(String(tmdbId));
 };
 

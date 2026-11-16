@@ -1,0 +1,10 @@
+[Unit]
+Description=StreamFusion public search catalog synchronization
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock -n /var/lib/streamfusion-catalog/sync.lock /www/server/nvm/versions/node/v24.11.1/bin/node /opt/streamfusion-catalog/sync-public-catalog.mjs
+TimeoutStartSec=55
+UMask=0022
