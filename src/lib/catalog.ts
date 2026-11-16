@@ -32,7 +32,8 @@ const CHUNK_PREFIX = "catalog_";
 const MAX_CHUNK_BYTES = 700_000;
 const OVERVIEW_MAX = 300;
 
-const LOCAL_KEY = "sf_catalog_v1";
+// Discard browser copies made from the incomplete public index.
+const LOCAL_KEY = "sf_catalog_v2";
 const LOCAL_TTL_MS = 10 * 60 * 1000;
 
 type CatalogItem = Omit<Content, "seasons" | "video_url" | "credits" | "imported_by">;
