@@ -11,6 +11,7 @@ import AnalyticsTracker from "@/components/AnalyticsTracker";
 import ScrollToTop from "@/components/ScrollToTop";
 import AccountProgressSync from "@/components/AccountProgressSync";
 import CatalogRefresh from "@/components/CatalogRefresh";
+import InteractionGuard from "@/components/InteractionGuard";
 import ThemeApplier from "@/components/ThemeApplier";
 import AdsCodeInjector from "@/components/ads/AdsCodeInjector";
 import AntiAdblock from "@/components/ads/AntiAdblock";
@@ -101,6 +102,7 @@ export default function App() {
             <AuthProvider>
               <AccountProgressSync />
               <CatalogRefresh />
+              <InteractionGuard />
               <TooltipProvider>
                 <ThemeApplier />
                 <AdsCodeInjector />

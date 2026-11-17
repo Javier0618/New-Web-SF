@@ -1,0 +1,13 @@
+html.sf-interaction-guard,
+html.sf-interaction-guard * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+html.sf-interaction-guard
+  :is(input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"]),
+html.sf-interaction-guard [contenteditable]:not([contenteditable="false"]) * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}

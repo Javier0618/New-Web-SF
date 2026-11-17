@@ -7,6 +7,7 @@ import "./native-ads.css";
 import "./cinema.css";
 import "./player.css";
 import "./footer.css";
+import "./interaction-guard.css";
 import { isDevHost } from "./lib/devHost";
 import { applyTvModeClass } from "./lib/tvMode";
 
