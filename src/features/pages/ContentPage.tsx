@@ -522,7 +522,6 @@ const ContentDetailPage = ({ docId }: { docId: string }) => {
   return (
     <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
       <Navbar />
-      <h1 className="sr-only">{isMovie ? "Detalles de la película" : "Detalles de la serie"}</h1>
 
       {/* ═══ Fondo cinematográfico ═══ */}
       <div
@@ -739,7 +738,7 @@ const ContentDetailPage = ({ docId }: { docId: string }) => {
           <div className="flex-1 min-w-0 space-y-6">
             <div>
               <div className="sf-detail-title">
-                <TitleLogo tmdbId={content.id} mediaType={content.media_type} title={content.title} as="h2"
+                <TitleLogo tmdbId={content.id} mediaType={content.media_type} title={content.title} as="h1"
                   textClassName="font-display font-condensed text-4xl md:text-6xl font-extrabold tracking-tight leading-tight"
                   imgClassName="sf-detail-title-logo" />
               </div>
