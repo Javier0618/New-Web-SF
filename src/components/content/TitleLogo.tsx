@@ -73,10 +73,12 @@ function ResolvedTitleLogo({
   if (!logo) return <Tag className={textClassName}>{title}</Tag>;
   return (
     <Tag className="contents">
+      <span className="sr-only">{title}</span>
       <img
         key={logo.file_path}
         src={logoUrl(logo)}
         alt={title}
+        aria-hidden="true"
         className={imgClassName}
         loading="eager"
         draggable={false}
