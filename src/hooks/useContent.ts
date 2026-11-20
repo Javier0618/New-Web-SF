@@ -10,16 +10,22 @@ import {
   readLocalCatalog,
   writeLocalCatalog,
   toCatalogItem,
+  type LocalCache,
 } from "@/lib/catalog";
+import { readPublicCatalog } from "@/lib/publicCatalog";
 import { fetchTmdbDetails } from "@/lib/tmdb";
 import type { Content } from "@/types/content";
 
 /**
- * Carga el catálogo: primero caché del navegador, luego el índice ligero
- * (1-3 lecturas). Solo si el índice todavía no existe se recurre a leer la
- * colección completa, como hacía la versión anterior.
+ * Usa instantáneas ligeras publicadas por el sincronizador del VPS. Conserva
+ * compatibilidad con el índice Firestore si no existe todavía ese servicio.
  */
-const loadCatalog = async (): Promise<Content[]> => {
+const loadCatalog = async ({ signal }: { signal?: AbortSignal } = {}): Promise<LocalCache> => {
+  const snapshot = await readPublicCatalog(signal);
+  if (snapshot) {
+    writeLocalCatalog(snapshot.items, snapshot.revision);
+    return snapshot;
+  }
   let items: Content[] | null = null;
   try {
     items = await readCatalogIndex();
@@ -30,7 +36,7 @@ const loadCatalog = async (): Promise<Content[]> => {
   // (los documentos completos con temporadas no caben en la caché del navegador).
   if (!items) items = (await fetchAllContent()).map((c) => toCatalogItem(c) as Content);
   writeLocalCatalog(items);
-  return items;
+  return { items, t: Date.now() };
 };
 
 export const useContent = (type?: "movie" | "tv") => {
@@ -41,13 +47,13 @@ export const useContent = (type?: "movie" | "tv") => {
   } = useQuery({
     queryKey: ["catalog"],
     queryFn: loadCatalog,
-    initialData: () => readLocalCatalog()?.items,
+    initialData: () => readLocalCatalog() ?? undefined,
     initialDataUpdatedAt: () => readLocalCatalog()?.t,
     staleTime: 10 * 60 * 1000,
     retry: 1,
   });
 
-  const all = data ?? [];
+  const all = data?.items ?? [];
   const content = type ? all.filter((c) => c.media_type === type) : all;
   return { content, loading, refetch };
 };

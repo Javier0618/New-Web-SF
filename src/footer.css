@@ -280,8 +280,17 @@
   color: hsl(var(--muted-foreground));
   font-size: 10px;
 }
-.sf-footer-bottom > p {
+.sf-footer-legal {
+  flex: 1;
+  min-width: 0;
+  max-width: 790px;
+  line-height: 1.8;
   overflow-wrap: anywhere;
+}
+.sf-footer-disclaimer {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.7;
 }
 .sf-footer-bottom button {
   display: inline-flex;
@@ -405,12 +414,14 @@
   }
   .sf-footer-bottom {
     align-items: start;
+    flex-wrap: wrap;
     gap: 14px;
     font-size: 9px;
     padding: 20px 0 25px;
   }
-  .sf-footer-bottom > p {
-    max-width: 195px;
+  .sf-footer-legal {
+    flex-basis: 100%;
+    max-width: none;
     line-height: 1.8;
   }
   .sf-footer-bottom button {

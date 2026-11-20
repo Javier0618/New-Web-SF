@@ -224,7 +224,13 @@ const Footer = () => {
           )}
         </div>
         <div className="sf-footer-bottom">
-          <p>{text}</p>
+          <div className="sf-footer-legal">
+            <p>{text}</p>
+            <p className="sf-footer-disclaimer">
+              Este sitio no almacena ningún archivo en su servidor. Todo el contenido es
+              proporcionado por terceros no afiliados.
+            </p>
+          </div>
           <button onClick={toTop}>
             Volver arriba <ArrowUp size={15} />
           </button>

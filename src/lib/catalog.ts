@@ -32,7 +32,8 @@ const CHUNK_PREFIX = "catalog_";
 const MAX_CHUNK_BYTES = 700_000;
 const OVERVIEW_MAX = 300;
 
-const LOCAL_KEY = "sf_catalog_v1";
+// Discard browser copies made from the incomplete public index.
+const LOCAL_KEY = "sf_catalog_v2";
 const LOCAL_TTL_MS = 10 * 60 * 1000;
 
 type CatalogItem = Omit<Content, "seasons" | "video_url" | "credits" | "imported_by">;
@@ -83,9 +84,10 @@ export const readCatalogIndex = async (): Promise<Content[] | null> => {
   return items as Content[];
 };
 
-interface LocalCache {
+export interface LocalCache {
   t: number;
   items: Content[];
+  revision?: string;
 }
 
 export const readLocalCatalog = (): LocalCache | null => {
@@ -100,9 +102,9 @@ export const readLocalCatalog = (): LocalCache | null => {
   }
 };
 
-export const writeLocalCatalog = (items: Content[]) => {
+export const writeLocalCatalog = (items: Content[], revision?: string) => {
   try {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify({ t: Date.now(), items }));
+    localStorage.setItem(LOCAL_KEY, JSON.stringify({ t: Date.now(), items, revision }));
   } catch {
     /* cuota del navegador llena o modo privado: ignoramos */
   }
