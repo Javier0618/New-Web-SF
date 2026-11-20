@@ -31,6 +31,7 @@ import {
 import {
   searchTmdb,
   fetchTmdbDetails,
+  fetchTmdbAltTitles,
   fetchTmdbSeasonDetails,
   TMDB_IMG_BASE,
   type TmdbSearchResult,
@@ -140,10 +141,20 @@ function ImportModal({ item, onClose, onImported, adminEmail }: ImportModalProps
       };
 
       const metadata = await fetchTmdbDetails(item.id, item.media_type).catch(() => null);
+      const alt = await fetchTmdbAltTitles(item.id, item.media_type).catch(() => ({ en: "", romaji: "" }));
+      let title = item.title || item.name || "";
+      // Sin traducción (sigue en japonés, coreano, chino…): Romaji si existe; si no, se pregunta el nombre
+      if (/[Ѐ-ӿ฀-๿぀-ヿ㐀-鿿가-힯]/.test(title)) {
+        const pick = alt.romaji || window.prompt(`"${title}" no tiene traducción ni nombre en Romaji. ¿Con qué nombre lo guardo?`, alt.en || title);
+        if (!pick?.trim()) return; // cancelado: no se guarda (el finally apaga el "cargando")
+        title = pick.trim();
+      }
       const base: any = {
         id: item.id,
         media_type: item.media_type,
-        title: item.title || item.name || "",
+        title,
+        ...(alt.en ? { title_en: alt.en } : {}),
+        ...(alt.romaji ? { title_romaji: alt.romaji } : {}),
         original_title: item.original_title || item.original_name,
         overview: item.overview,
         poster_path: item.poster_path || "",

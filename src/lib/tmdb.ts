@@ -116,6 +116,18 @@ export const fetchTmdbDetails = async (id: number, type: "movie" | "tv", languag
   return { ...data, media_type: type };
 };
 
+/** Nombre en inglés y en Romaji (japonés con letras latinas) para guardar y buscar. */
+export const fetchTmdbAltTitles = async (id: number, type: "movie" | "tv"): Promise<{ en: string; romaji: string }> => {
+  const res = await fetch(`${TMDB_BASE_URL}/${type}/${id}?api_key=${getTmdbKey()}&append_to_response=alternative_titles,translations`);
+  if (!res.ok) throw new Error("TMDB alt titles error");
+  const d = await res.json();
+  const alts: { title?: string; type?: string }[] = (type === "tv" ? d.alternative_titles?.results : d.alternative_titles?.titles) || [];
+  const romaji = alts.find(a => /roma(ji|nization)/i.test(a.type || ""))?.title?.trim() || "";
+  const tr = (d.translations?.translations || []).find((t: any) => t.iso_639_1 === "en");
+  const en = String(tr?.data?.[type === "tv" ? "name" : "title"] || "").trim();
+  return { en, romaji };
+};
+
 export interface TmdbLogo {
   file_path: string;
   iso_639_1: string | null;
